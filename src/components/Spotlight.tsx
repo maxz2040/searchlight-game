@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
 import type { Creature } from '../levels/levels';
+import { circleHitsRect, creatureRect } from '../collision';
 
 interface Props {
   /** Spotlight radius as a fraction of min(width, height). PRD says 0.14–0.18. */
@@ -116,18 +117,9 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
       const seen = foundRef.current;
       for (const c of list) {
         if (seen.has(c.id)) continue;
-        // Rectangle in pixels, centred on (c.x, c.y).
-        const rectW = c.w * W;
-        const rectH = c.h * H;
-        const rectX = c.x * W - rectW / 2;
-        const rectY = c.y * H - rectH / 2;
-        // Closest point on rect to circle centre.
-        const closestX = Math.max(rectX, Math.min(cx, rectX + rectW));
-        const closestY = Math.max(rectY, Math.min(cy, rectY + rectH));
-        const dx = cx - closestX;
-        const dy = cy - closestY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < r) {
+        // Use the extracted pure helpers (also exercised by unit tests).
+        const rect = creatureRect(c, W, H);
+        if (circleHitsRect({ cx, cy, r }, rect)) {
           onRevealRef.current(c.id);
         }
       }
@@ -180,9 +172,10 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
       onPointerDown={handlePointer}
       role="application"
       aria-label="Searchlight play area — drag your finger to find creatures"
+      data-testid="play-surface"
     >
       {children}
-      <motion.div ref={overlayRef} style={overlayStyle} />
+      <motion.div ref={overlayRef} style={overlayStyle} data-testid="spotlight-overlay" />
     </div>
   );
 }

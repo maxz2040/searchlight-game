@@ -24,17 +24,18 @@ export function playPing() {
   // Resume on first user interaction (Safari iOS requirement).
   if (a.state === 'suspended') a.resume().catch(() => {});
 
-  const now = a.currentTime;
+  const ctxLocal: AudioContext = a;
+  const now = ctxLocal.currentTime;
 
   function tone(freq: number, t0: number, dur: number, gain = 0.18) {
-    const osc = a.createOscillator();
-    const env = a.createGain();
+    const osc = ctxLocal.createOscillator();
+    const env = ctxLocal.createGain();
     osc.type = 'triangle';
     osc.frequency.value = freq;
     env.gain.setValueAtTime(0, t0);
     env.gain.linearRampToValueAtTime(gain, t0 + 0.01);
     env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    osc.connect(env).connect(a.destination);
+    osc.connect(env).connect(ctxLocal.destination);
     osc.start(t0);
     osc.stop(t0 + dur + 0.01);
   }
@@ -49,17 +50,20 @@ export function playFanfare() {
   if (!a) return;
   if (a.state === 'suspended') a.resume().catch(() => {});
 
-  const now = a.currentTime;
+  // Capture in a non-null local so TS narrowing holds across the
+  // nested `chord` closure boundary.
+  const ctxLocal: AudioContext = a;
+  const now = ctxLocal.currentTime;
   function chord(freqs: number[], t0: number, dur: number, gain = 0.12) {
     for (const f of freqs) {
-      const osc = a.createOscillator();
-      const env = a.createGain();
+      const osc = ctxLocal.createOscillator();
+      const env = ctxLocal.createGain();
       osc.type = 'triangle';
       osc.frequency.value = f;
       env.gain.setValueAtTime(0, t0);
       env.gain.linearRampToValueAtTime(gain, t0 + 0.02);
       env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-      osc.connect(env).connect(a.destination);
+      osc.connect(env).connect(ctxLocal.destination);
       osc.start(t0);
       osc.stop(t0 + dur + 0.05);
     }

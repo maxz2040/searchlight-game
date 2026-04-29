@@ -14,6 +14,7 @@ import { Creature } from './Creature';
 import { SceneBackground } from './SceneBackground';
 import { useGame } from '../store/gameStore';
 import { playPing } from '../sound';
+import type { Creature as LevelCreature } from '../levels/levels';
 
 export function Scene() {
   const level = useGame((s) => s.level());
@@ -83,6 +84,8 @@ export function Scene() {
                 height: `${c.h * 100}%`,
                 transform: 'translate(-50%, -50%)',
               }}
+              data-testid={`creature-${c.id}`}
+              data-found={isFound ? 'true' : 'false'}
             >
               {isHinted && (
                 <div className="absolute inset-0 rounded-full bg-spotlight-warm/60 blur-2xl animate-hint-pulse" />
@@ -139,9 +142,7 @@ function RemainingTray({
   creatures,
   found,
 }: {
-  creatures: ReturnType<typeof useGame>['levelId'] extends string
-    ? import('../levels/levels').Creature[]
-    : never;
+  creatures: LevelCreature[];
   found: Set<string>;
 }) {
   return (
