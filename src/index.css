@@ -1,0 +1,72 @@
+/* Pokemon Searchlight Edition — global styles.
+   Tailwind v4 + custom CSS variables for the kid-friendly palette.
+   No-scroll, full-viewport, touch-action none on the play surface. */
+@import "tailwindcss";
+
+@theme {
+  --color-night: #0a0d1f;
+  --color-night-deep: #050714;
+  --color-spotlight-warm: #fff4c8;
+  --color-spotlight-edge: #ffd070;
+  --color-paper: #fff8e7;
+  --color-accent: #ff6b9d;
+  --color-leaf: #4ade80;
+  --color-sky: #93c5fd;
+  --font-display: "Fredoka", "SF Pro Rounded", system-ui, sans-serif;
+  --font-body: "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--color-night-deep);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  font-feature-settings: "ss01", "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  /* iPad-friendly: disable double-tap zoom on the game surface */
+  touch-action: none;
+}
+
+/* The play surface MUST receive every touch/pointer event without
+   the browser hijacking for scroll/zoom. */
+.play-surface {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-first: place primary action buttons in the lower third for
+   thumb reachability — see PRD UI/UX guidelines. */
+@layer utilities {
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+  .safe-top    { padding-top: env(safe-area-inset-top, 0); }
+}
+
+/* Animations */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.04); }
+}
+.animate-pulse-soft { animation: pulse-soft 2.4s ease-in-out infinite; }
+
+@keyframes hint-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.0; }
+  50%      { transform: scale(1.5); opacity: 0.55; }
+}
+.animate-hint-pulse { animation: hint-pulse 1.8s ease-in-out infinite; }
+
+@keyframes reveal-pop {
+  0%   { transform: scale(0.6) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.18) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0);       opacity: 1; }
+}
+.animate-reveal-pop { animation: reveal-pop 480ms cubic-bezier(.34, 1.56, .64, 1) both; }
