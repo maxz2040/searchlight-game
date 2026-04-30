@@ -5,12 +5,18 @@
 // (Higgsfield seedance_2.0, 8s 1080p, scene-comes-to-life) plays full-
 // frame as the celebration. Generated offline at build time and shipped
 // as static MP4 in /public/videos/{level-id}.mp4.
+//
+// v1 UAT fixes: emoji replaced with inline SVG (font fallback rendered
+// missing-glyph boxes); Skip button enlarged to 48-px touch target;
+// celebration card re-anchored higher so iPad portrait reads top-down
+// instead of bunching content above a void.
 
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from '../store/gameStore';
 import { Creature } from './Creature';
 import { playFanfare } from '../sound';
+import { ConfettiIcon, ArrowRightIcon, PlayIcon } from './icons';
 
 // Map level id → reward video URL. Same convention as scene/creature maps.
 const VIDEO_URL: Record<string, string> = {
@@ -75,16 +81,17 @@ export function Complete() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="absolute top-8 left-1/2 -translate-x-1/2 rounded-full bg-night/80 px-6 py-2 text-paper font-display text-2xl font-bold backdrop-blur-sm safe-top"
+          className="absolute top-8 left-1/2 -translate-x-1/2 rounded-full bg-night/80 px-6 py-2 text-paper font-display text-2xl font-bold backdrop-blur-sm safe-top shadow-2xl ring-1 ring-paper/20"
         >
-          ✨ You found them all!
+          You found them all!
         </motion.div>
-        {/* Skip-to-celebration button bottom-right (kid agency). */}
+        {/* Skip-to-celebration button bottom-right (kid agency). 48-px target. */}
         <button
           onClick={() => setPhase('card')}
-          className="absolute bottom-6 right-6 rounded-full bg-paper/85 px-4 py-2 text-sm font-bold text-night shadow-lg active:scale-95 transition-transform safe-bottom"
+          className="absolute bottom-6 right-6 inline-flex min-h-[48px] min-w-[88px] items-center justify-center gap-1.5 rounded-full bg-paper/95 px-5 py-2 text-base font-bold text-night shadow-lg active:scale-95 transition-transform safe-bottom"
         >
-          Skip ▶
+          Skip
+          <PlayIcon className="h-4 w-4" />
         </button>
       </motion.div>
     );
@@ -94,16 +101,17 @@ export function Complete() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-night-deep/95 backdrop-blur-sm safe-bottom safe-top"
+      className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-night-deep/95 backdrop-blur-sm safe-bottom safe-top overflow-y-auto py-10"
     >
       <div className="flex max-w-md flex-col items-center gap-6 px-6 text-center">
         <motion.div
           initial={{ scale: 0.4, rotate: -8, opacity: 0 }}
           animate={{ scale: 1, rotate: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 14 }}
-          className="text-7xl"
+          className="relative h-24 w-24"
         >
-          🎉
+          <div className="absolute inset-0 rounded-full bg-spotlight-warm/40 blur-3xl" />
+          <ConfettiIcon className="relative h-full w-full drop-shadow-2xl" />
         </motion.div>
         <motion.h2
           initial={{ y: 12, opacity: 0 }}
@@ -126,7 +134,7 @@ export function Complete() {
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="grid grid-cols-5 gap-3 rounded-2xl bg-night/50 p-3"
+          className="grid grid-cols-5 gap-3 rounded-2xl bg-night/50 p-4 ring-1 ring-paper/15 shadow-xl"
         >
           {level.creatures.map((c, i) => (
             <motion.div
@@ -136,7 +144,7 @@ export function Complete() {
               transition={{ delay: 0.55 + i * 0.06, type: 'spring', stiffness: 280, damping: 14 }}
               className="flex flex-col items-center gap-1"
             >
-              <div className="h-14 w-14">
+              <div className="h-14 w-14 rounded-2xl bg-paper/95 p-1 shadow-md ring-1 ring-spotlight-warm/40">
                 <Creature kind={c.kind} found />
               </div>
               <div className="text-xs font-semibold text-paper/85">{c.name}</div>
@@ -158,9 +166,10 @@ export function Complete() {
           </button>
           <button
             onClick={next}
-            className="min-h-[56px] min-w-[140px] rounded-full bg-accent px-6 py-3 text-lg font-bold text-paper shadow-lg active:scale-95 transition-transform"
+            className="inline-flex min-h-[56px] min-w-[140px] items-center justify-center gap-1.5 rounded-full bg-accent px-6 py-3 text-lg font-bold text-paper shadow-lg active:scale-95 transition-transform"
           >
-            Next level →
+            Next level
+            <ArrowRightIcon className="h-5 w-5" />
           </button>
         </motion.div>
       </div>

@@ -33,10 +33,13 @@ describe('LEVELS', () => {
     }
   })
 
-  it('every level has 3-5 creatures (PRD §Level structure)', () => {
+  it('every level has 5-15 creatures (v1 composited density)', () => {
+    // v0 PRD pinned 3–5 hand-placed creatures. v1 composites 8–13
+    // characters baked into the painting via Higgsfield + Claude-vision
+    // detection (docs/v1-compositing.md), so the bound is wider.
     for (const level of LEVELS) {
-      expect(level.creatures.length).toBeGreaterThanOrEqual(3)
-      expect(level.creatures.length).toBeLessThanOrEqual(5)
+      expect(level.creatures.length).toBeGreaterThanOrEqual(5)
+      expect(level.creatures.length).toBeLessThanOrEqual(15)
     }
   })
 

@@ -1,12 +1,24 @@
 // Brief one-screen tutorial overlay. Shows the spotlight icon + the
 // "drag your finger" message. Auto-dismisses after first pointer-down,
 // or via the big start button.
+//
+// v1: replaced emoji (🔦, ✨) with inline SVG so the icons render on
+// devices/fonts without colour-emoji glyphs. Now also displays the level
+// title + scene name so returning kids know which level they're starting.
 
 import { motion } from 'framer-motion';
 import { useGame } from '../store/gameStore';
+import { LanternIcon, SparkleIcon } from './icons';
+
+const SCENE_LABEL: Record<string, string> = {
+  forest: 'Whispering Forest',
+  meadow: 'Meadow at Dusk',
+  beach: 'Starlit Shore',
+};
 
 export function Tutorial() {
   const begin = useGame((s) => s.beginPlaying);
+  const level = useGame((s) => s.level());
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -22,14 +34,28 @@ export function Tutorial() {
           className="relative h-32 w-32"
         >
           <div className="absolute inset-0 rounded-full bg-spotlight-warm/40 blur-3xl" />
-          <div className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-spotlight-warm to-spotlight-edge text-5xl">
-            🔦
+          <div className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-spotlight-warm to-spotlight-edge text-night-deep shadow-2xl">
+            <LanternIcon className="h-16 w-16" />
           </div>
         </motion.div>
+
+        {/* Level chip — paper pill so kids see what they're entering. */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          className="flex items-center gap-2 rounded-full bg-paper/15 px-4 py-1.5 ring-1 ring-paper/25"
+        >
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-paper/70">
+            {SCENE_LABEL[level.scene] === level.title ? 'Level' : level.scene}
+          </span>
+          <span className="text-base font-bold text-paper">{level.title}</span>
+        </motion.div>
+
         <motion.h1
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.24 }}
           className="font-display text-4xl font-bold text-paper"
         >
           Find the hidden friends!
@@ -48,10 +74,11 @@ export function Tutorial() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.45 }}
           onClick={begin}
-          className="mt-4 min-h-[60px] min-w-[200px] rounded-full bg-accent px-8 py-4 text-xl font-bold text-paper shadow-2xl active:scale-95 transition-transform"
+          className="mt-4 inline-flex min-h-[60px] min-w-[200px] items-center justify-center gap-2 rounded-full bg-accent px-8 py-4 text-xl font-bold text-paper shadow-2xl active:scale-95 transition-transform"
           aria-label="Start playing"
         >
-          Let's go ✨
+          Let's go
+          <SparkleIcon className="h-6 w-6" />
         </motion.button>
       </div>
     </motion.div>

@@ -53,10 +53,14 @@ describe('Scene', () => {
     expect(tag.getAttribute('data-found')).toBe('true')
   })
 
-  it('shows the initial remaining-creature count', () => {
-    render(<Scene />)
+  it('shows the initial 0/total progress on the pill', () => {
+    const { container } = render(<Scene />)
     const total = LEVELS[0].creatures.length
-    expect(screen.getByText(new RegExp(`${total} creatures hiding`))).toBeInTheDocument()
+    // ProgressPill renders {found}/{total} across multiple span elements
+    // (so getByText with a regex won't match — text is broken up). Walk
+    // the DOM and assert on textContent of the pill instead.
+    const text = (container.textContent ?? '').replace(/\s+/g, ' ')
+    expect(text).toMatch(new RegExp(`0\\s*/\\s*${total}`))
   })
 
   it('updates the store-derived remaining count when a creature is found', () => {

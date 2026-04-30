@@ -6,6 +6,16 @@
 // nearest unfound creature gently pulses to nudge them toward it.
 // Disabled once the spotlight is moving again. Improves accessibility
 // for younger players (PRD §UI/UX).
+//
+// v1 UAT fixes (see docs/v1-uat-findings.md):
+//   * All emoji replaced with inline SVG (font fallback was rendering
+//     missing-glyph boxes on iPad / headless chromium).
+//   * Tray buttons promoted to 56 px (kid touch-target minimum) with a
+//     paper ring on unfound slots so kids can count remaining-to-find
+//     even in the dark.
+//   * Count toast became a progress pill: "found / total" + a thin warm
+//     fill bar for at-a-glance progress.
+//   * Find-this chip scales up on touch devices for arm's-length viewing.
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +25,7 @@ import { SceneBackground } from './SceneBackground';
 import { useGame } from '../store/gameStore';
 import { playPing } from '../sound';
 import type { Creature as LevelCreature } from '../levels/levels';
+import { SparkleIcon } from './icons';
 
 export function Scene() {
   const level = useGame((s) => s.level());
@@ -51,6 +62,9 @@ export function Scene() {
     // light haptic on supported devices
     if ('vibrate' in navigator) navigator.vibrate?.(12);
   }
+
+  const total = level.creatures.length;
+  const foundCount = total - remaining;
 
   return (
     <div
@@ -106,8 +120,8 @@ export function Scene() {
         })}
       </Spotlight>
 
-      {/* HUD — top corners. 48px touch targets. */}
-      <SceneHud title={level.title} remaining={remaining} total={level.creatures.length} />
+      {/* HUD — top corners. */}
+      <SceneHud title={level.title} />
 
       {/* "Find this!" floating vignette — shows the next creature the kid
           should hunt. Replaces the per-creature name pills which were
@@ -117,19 +131,9 @@ export function Scene() {
       {/* Remaining icons — bottom-right. */}
       <RemainingTray creatures={level.creatures} found={found} />
 
-      {/* Count toast — top-centre. */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`count-${remaining}`}
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.32 }}
-          className="absolute top-6 left-1/2 -translate-x-1/2 rounded-full bg-night/80 px-5 py-2 text-paper font-semibold text-lg backdrop-blur-sm safe-top"
-        >
-          {remaining} {remaining === 1 ? 'left to find' : 'left to find'}
-        </motion.div>
-      </AnimatePresence>
+      {/* Progress pill — top-centre. Now shows "X / Y" plus a fill bar so
+          kids can see momentum. */}
+      <ProgressPill found={foundCount} total={total} />
     </div>
   );
 }
@@ -141,6 +145,8 @@ export function Scene() {
  * the current target is found. Uses AnimatePresence to fade-and-spring
  * the swap so the moment the kid finds one, the next target arrives
  * with a satisfying flourish.
+ *
+ * Touch-device sizing: ~120 px so it's legible at arm's length on iPad.
  */
 function TargetVignette({
   creatures,
@@ -151,7 +157,7 @@ function TargetVignette({
 }) {
   const target = creatures.find((c) => !found.has(c.id));
   return (
-    <div className="pointer-events-none absolute left-4 top-20 safe-top">
+    <div className="pointer-events-none absolute left-4 top-24 safe-top z-10">
       <AnimatePresence mode="wait">
         {target ? (
           <motion.div
@@ -160,16 +166,16 @@ function TargetVignette({
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: -6 }}
             transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-            className="flex flex-col items-center gap-1"
+            className="flex flex-col items-center gap-1.5"
           >
-            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-paper/85 drop-shadow">
+            <div className="rounded-full bg-spotlight-warm/95 px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-night-deep shadow-md">
               Find this!
             </div>
-            <div className="relative h-24 w-24 rounded-3xl bg-paper/95 p-1 shadow-2xl ring-4 ring-spotlight-warm/60">
+            <div className="relative h-28 w-28 rounded-3xl bg-paper/95 p-1.5 shadow-2xl ring-4 ring-spotlight-warm/70 sm:h-24 sm:w-24">
               <div className="absolute inset-0 -z-10 rounded-3xl bg-spotlight-warm/40 blur-xl animate-pulse-soft" />
               <Creature kind={target.kind} found />
             </div>
-            <div className="rounded-full bg-night/80 px-3 py-0.5 text-sm font-bold text-paper backdrop-blur-sm">
+            <div className="rounded-full bg-night/85 px-3 py-1 text-base font-bold text-paper backdrop-blur-sm shadow">
               {target.name}
             </div>
           </motion.div>
@@ -178,9 +184,10 @@ function TargetVignette({
             key="all-found"
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-2xl bg-leaf/90 px-4 py-2 text-sm font-bold text-night-deep shadow-lg"
+            className="flex items-center gap-1.5 rounded-2xl bg-leaf/90 px-4 py-2 text-base font-bold text-night-deep shadow-lg"
           >
-            ✨ All found!
+            <SparkleIcon className="h-5 w-5" />
+            All found!
           </motion.div>
         )}
       </AnimatePresence>
@@ -188,14 +195,66 @@ function TargetVignette({
   );
 }
 
-function SceneHud({ title }: { title: string; remaining: number; total: number }) {
+function SceneHud({ title }: { title: string }) {
   return (
-    <div className="pointer-events-none absolute top-3 left-4 right-4 flex items-start justify-between safe-top">
-      <h1 className="font-display text-2xl font-bold text-paper drop-shadow-lg">{title}</h1>
+    <div className="pointer-events-none absolute top-3 left-4 right-4 flex items-start justify-between safe-top z-10">
+      {/* Title sits in a soft paper-haloed pill so it stays legible on any
+          scene (the AI-generated backgrounds vary in luminance). */}
+      <div className="rounded-2xl bg-night/55 px-4 py-1.5 backdrop-blur-md shadow-lg ring-1 ring-paper/20">
+        <h1 className="font-display text-2xl font-bold text-paper drop-shadow-lg">{title}</h1>
+      </div>
     </div>
   );
 }
 
+function ProgressPill({ found, total }: { found: number; total: number }) {
+  const remaining = total - found;
+  const pct = total === 0 ? 0 : Math.round((found / total) * 100);
+  const allDone = remaining === 0;
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={`progress-${found}-${total}`}
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.3 }}
+        className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 rounded-2xl bg-night/80 px-5 py-2 backdrop-blur-sm shadow-lg ring-1 ring-paper/15 safe-top z-10"
+      >
+        <div className="flex items-baseline gap-1.5 text-paper">
+          <span className="font-display text-xl font-extrabold tabular-nums text-spotlight-warm">
+            {found}
+          </span>
+          <span className="text-sm font-semibold text-paper/70">/</span>
+          <span className="font-display text-base font-bold tabular-nums text-paper/85">
+            {total}
+          </span>
+          <span className="ml-1 text-sm font-semibold text-paper/85">
+            {allDone ? 'all found!' : remaining === 1 ? 'one to go' : 'found'}
+          </span>
+        </div>
+        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-paper/15">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-spotlight-warm to-spotlight-edge"
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          />
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+/**
+ * Bottom-right tray of creature slots. Scales gracefully:
+ *   * 7–9 creatures → single row on desktop / iPad landscape, wraps to a
+ *     balanced 2-row grid on iPad portrait.
+ *   * Up to ~13 creatures → grid clamps at 8 columns (CSS-grid `auto-fill`)
+ *     so there's never a stray orphan icon on a half-empty second row.
+ *   * Each slot is 56 px (kid touch-target floor); unfound slots show an
+ *     outline so kids can count remaining slots even in the dark.
+ */
 function RemainingTray({
   creatures,
   found,
@@ -203,22 +262,39 @@ function RemainingTray({
   creatures: LevelCreature[];
   found: Set<string>;
 }) {
+  // Choose column count so 7–9 fits in one row on wide viewports but
+  // wraps cleanly on portrait.
+  const cols = Math.min(creatures.length, 9);
   return (
-    <div className="pointer-events-none absolute bottom-4 right-4 flex flex-wrap gap-2 rounded-2xl bg-night/70 p-2 backdrop-blur-sm safe-bottom max-w-[60%] justify-end">
-      {creatures.map((c) => {
-        const isFound = found.has(c.id);
-        return (
-          <div
-            key={c.id}
-            className={`h-11 w-11 overflow-hidden rounded-full transition-colors ${
-              isFound ? 'bg-paper/90 ring-2 ring-spotlight-edge' : 'bg-night/80 border border-paper/30'
-            }`}
-            title={isFound ? c.name : 'hidden'}
-          >
-            <Creature kind={c.kind} found={isFound} />
-          </div>
-        );
-      })}
+    <div className="pointer-events-none absolute bottom-4 right-4 safe-bottom z-10 max-w-[88%]">
+      <div
+        className="grid gap-2 rounded-3xl bg-night/85 p-2.5 ring-1 ring-paper/15 shadow-2xl backdrop-blur-md"
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+        }}
+      >
+        {creatures.map((c) => {
+          const isFound = found.has(c.id);
+          return (
+            <div
+              key={c.id}
+              className={`relative h-14 w-14 overflow-hidden rounded-2xl transition-all duration-300 ${
+                isFound
+                  ? 'bg-paper/95 ring-2 ring-spotlight-warm shadow-md'
+                  : 'bg-night-deep/90 ring-2 ring-paper/25'
+              }`}
+              title={isFound ? c.name : 'hidden'}
+            >
+              {/* Found check-glow — soft warm halo so the kid feels rewarded
+                  every time their eye scans the tray. */}
+              {isFound && (
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-spotlight-warm/15" />
+              )}
+              <Creature kind={c.kind} found={isFound} />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
