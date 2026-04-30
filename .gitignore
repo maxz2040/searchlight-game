@@ -45,3 +45,8 @@ docs/model-comparison.html
 
 # Scene verification screenshots — auto-regenerable via scratch/verify-scenes.ts
 docs/v1-scene-verify/
+
+# Character reference sheets (~4-5MB each × 50 = 215MB, regenerable via
+# scratch/sheets/dispatch.sh). Used as compositing inputs only — not
+# shipped to production.
+public/character-sheets/
