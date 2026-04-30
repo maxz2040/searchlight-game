@@ -1,11 +1,23 @@
 // Level complete screen. Shows time-to-complete + a row of all the
 // creatures the player found, plus replay/next buttons.
+//
+// v1: when the kid finds the final creature, the level's reward video
+// (Higgsfield seedance_2.0, 8s 1080p, scene-comes-to-life) plays full-
+// frame as the celebration. Generated offline at build time and shipped
+// as static MP4 in /public/videos/{level-id}.mp4.
 
 import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGame } from '../store/gameStore';
 import { Creature } from './Creature';
 import { playFanfare } from '../sound';
+
+// Map level id → reward video URL. Same convention as scene/creature maps.
+const VIDEO_URL: Record<string, string> = {
+  'lvl-1': '/videos/lvl-1-forest.mp4',
+  'lvl-2': '/videos/lvl-2-meadow.mp4',
+  'lvl-3': '/videos/lvl-3-shore.mp4',
+};
 
 function formatMs(ms: number): string {
   const totalSec = Math.round(ms / 1000);
@@ -20,9 +32,63 @@ export function Complete() {
   const replay = useGame((s) => s.replay);
   const next = useGame((s) => s.next);
 
+  // The reward sequence: video plays first (8s, autoplay muted), then the
+  // celebration card slides in. If the video file is missing (e.g. older
+  // build) we just show the card immediately.
+  const videoUrl = VIDEO_URL[level.id];
+  const [phase, setPhase] = useState<'video' | 'card'>(videoUrl ? 'video' : 'card');
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
-    playFanfare();
-  }, []);
+    // Fanfare aligns with the END of the video (or fires immediately when
+    // there's no video) so the audio peak lands with the card reveal.
+    if (phase === 'card') playFanfare();
+  }, [phase]);
+
+  // If the video fails to load (e.g. blocked autoplay), fall through to
+  // the card after a short timeout so the kid is never stuck.
+  useEffect(() => {
+    if (phase !== 'video') return;
+    const fallback = window.setTimeout(() => setPhase('card'), 9_500);
+    return () => window.clearTimeout(fallback);
+  }, [phase]);
+
+  if (phase === 'video' && videoUrl) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="absolute inset-0 z-30 bg-night-deep"
+      >
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          autoPlay
+          muted
+          playsInline
+          onEnded={() => setPhase('card')}
+          onError={() => setPhase('card')}
+          className="h-full w-full object-cover"
+        />
+        {/* Subtle "you found them all" caption layered on the video. */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="absolute top-8 left-1/2 -translate-x-1/2 rounded-full bg-night/80 px-6 py-2 text-paper font-display text-2xl font-bold backdrop-blur-sm safe-top"
+        >
+          ✨ You found them all!
+        </motion.div>
+        {/* Skip-to-celebration button bottom-right (kid agency). */}
+        <button
+          onClick={() => setPhase('card')}
+          className="absolute bottom-6 right-6 rounded-full bg-paper/85 px-4 py-2 text-sm font-bold text-night shadow-lg active:scale-95 transition-transform safe-bottom"
+        >
+          Skip ▶
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
