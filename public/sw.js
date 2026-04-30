@@ -6,7 +6,7 @@
 // in place but `/api/scene/*` is a stub URL today; once the real
 // backend lands, this SW will transparently cache its responses.
 
-const CACHE_VERSION = 'searchlight-v2-composited';
+const CACHE_VERSION = 'searchlight-v3-anime';
 const APP_SHELL = ['/', '/index.html', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -36,7 +36,14 @@ self.addEventListener('fetch', (event) => {
   //   navigations       → network-first w/ cache fallback (for offline)
   if (url.pathname.startsWith('/api/scene/')) {
     event.respondWith(staleWhileRevalidate(event.request));
-  } else if (url.pathname.match(/\.(js|css|svg|png|jpg|webp|woff2)$/)) {
+  } else if (url.pathname.startsWith('/scenes/') || url.pathname.startsWith('/creatures/')) {
+    // Unhashed AI-generated assets — they change between builds when we
+    // re-run the compositing pipeline. SWR so the player always eventually
+    // gets the fresh image without breaking offline.
+    event.respondWith(staleWhileRevalidate(event.request));
+  } else if (url.pathname.match(/\.(js|css|woff2)$/)) {
+    // Vite-hashed bundles — cache-first is fine because filenames change
+    // with content.
     event.respondWith(cacheFirst(event.request));
   } else if (event.request.mode === 'navigate') {
     event.respondWith(networkFirst(event.request));

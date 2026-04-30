@@ -93,8 +93,19 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
   // Collision loop. rAF-driven, reads from motion values, writes to
   // store via onReveal. Runs only while at least one creature is
   // unfound — exits cleanly otherwise.
+  // Dwell threshold in ms — the spotlight must continuously overlap a
+  // creature's bbox for at least this long before we count it as "found".
+  // Stops accidental skim-finds where a fast sweep across the scene marks
+  // multiple creatures in passing. 700 ms is the sweet spot — slow enough
+  // to feel deliberate, fast enough to feel responsive once the kid lines
+  // up the lantern.
+  const DWELL_MS = 700;
+
   useEffect(() => {
     let raf = 0;
+    // Per-creature timestamp of when the spotlight first started overlapping
+    // its bbox (continuously). Reset to undefined when overlap breaks.
+    const overlapStart: Record<string, number | undefined> = {};
     function tick() {
       const surface = surfaceRef.current;
       if (!surface) {
@@ -113,14 +124,22 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
         return;
       }
 
+      const now = performance.now();
       const list = creaturesRef.current;
       const seen = foundRef.current;
       for (const c of list) {
         if (seen.has(c.id)) continue;
-        // Use the extracted pure helpers (also exercised by unit tests).
         const rect = creatureRect(c, W, H);
-        if (circleHitsRect({ cx, cy, r }, rect)) {
-          onRevealRef.current(c.id);
+        const overlapping = circleHitsRect({ cx, cy, r }, rect);
+        if (overlapping) {
+          if (overlapStart[c.id] == null) overlapStart[c.id] = now;
+          else if (now - overlapStart[c.id]! >= DWELL_MS) {
+            onRevealRef.current(c.id);
+            overlapStart[c.id] = undefined;
+          }
+        } else {
+          // Spotlight left the bbox — reset the dwell timer.
+          overlapStart[c.id] = undefined;
         }
       }
       raf = requestAnimationFrame(tick);
