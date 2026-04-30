@@ -202,3 +202,37 @@ re-defined to load creature positions per-composite.
 | `scratch/composite/detected-boxes.json`      | Detected bbox JSON |
 | `scratch/composite/composite-test-boxes.png` | QA overlay (pink rects) |
 | `docs/v1-compositing.md` | This file |
+
+---
+
+## Known limitation: nano_banana_2 character-diversity ceiling (Apr 2026)
+
+Multiple compositing strategies were tested to reach the user's "13 unique
+characters per scene" goal:
+
+1. **4 character refs + "include each at least once" prompt** — produced
+   ~5 unique kinds, the rest duplicated.
+2. **8 character refs + same prompt** — same outcome (~5 unique).
+3. **Explicit per-position prompt** ("position 1: leaf-pup behind log;
+   position 2: flame-cub on rock; …") with all 8 character refs attached
+   — same outcome. The model preserves the scene perfectly and inserts
+   ~10–13 chibi characters, but it heavily biases toward 2–3 character
+   kinds it considers "biome-canonical" and ignores the explicit list.
+
+**Verdict:** `nano_banana_2` (Gemini 2.5 Flash Image via Higgsfield) cannot
+honour multi-character diversity directives in a single call when the base
+scene reference is heavy. The model treats character diversity as a soft
+preference and lets biome reflex win.
+
+**Path forward (not yet built):** **multi-pass single-character compositing**
+— take the base scene, composite ONE specified character into one specified
+region, take that result, composite the next character into the next region,
+etc. Thirteen passes per scene × three scenes = ~40 passes total at ~20 s
+each ≈ 13 minutes per level. Higher cost (~10 credits × 39 ≈ 400 credits)
+but should yield genuine per-character control.
+
+For the current ship the levels keep their detected characters from the
+single-pass composite (8–10 per scene, biome-leaning duplicates accepted)
+because the active-target gating means the kid only ever hunts ONE creature
+at a time and duplicates of the same kind aren't a gameplay problem — just
+a visual variety ceiling.
