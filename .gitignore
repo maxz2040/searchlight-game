@@ -26,3 +26,9 @@ dist-ssr
 # Playwright
 test-results/
 playwright-report/
+
+# Report bundle: screenshots are auto-regenerated; the HTML and PDF are
+# the deliverables but they're 14 MB / 8 MB respectively — keep out of git.
+report/screenshots/
+report/index.html
+report/*.pdf

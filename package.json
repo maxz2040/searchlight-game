@@ -12,12 +12,16 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "test:all": "vitest run && playwright test"
+    "test:all": "vitest run && playwright test",
+    "report:capture": "tsx scripts/capture-report.ts",
+    "report:build": "tsx scripts/build-report.ts",
+    "report": "npm run build && (npm run preview -- --port 8770 --host 127.0.0.1 &) && sleep 3 && npm run report:capture && npm run report:build && pkill -f 'vite preview' || true"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "tsx": "^4.21.0",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
