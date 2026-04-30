@@ -1,0 +1,11 @@
+[
+  { "id": "c1", "kind": "leaf-pup",     "x": 0.105, "y": 0.605, "w": 0.105, "h": 0.190, "name": "Leafu" },
+  { "id": "c2", "kind": "leaf-pup",     "x": 0.205, "y": 0.700, "w": 0.115, "h": 0.110, "name": "Sprout" },
+  { "id": "c3", "kind": "pebble-pal",   "x": 0.295, "y": 0.625, "w": 0.075, "h": 0.085, "name": "Roxxo" },
+  { "id": "c4", "kind": "shroom-buddy", "x": 0.435, "y": 0.660, "w": 0.080, "h": 0.140, "name": "Shroomi" },
+  { "id": "c5", "kind": "pebble-pal",   "x": 0.520, "y": 0.730, "w": 0.115, "h": 0.135, "name": "Cobble" },
+  { "id": "c6", "kind": "puff-bird",    "x": 0.605, "y": 0.770, "w": 0.075, "h": 0.090, "name": "Puffi" },
+  { "id": "c7", "kind": "puff-bird",    "x": 0.685, "y": 0.785, "w": 0.075, "h": 0.085, "name": "Featherly" },
+  { "id": "c8", "kind": "shroom-buddy", "x": 0.730, "y": 0.555, "w": 0.075, "h": 0.140, "name": "Capper" },
+  { "id": "c9", "kind": "puff-bird",    "x": 0.790, "y": 0.510, "w": 0.060, "h": 0.075, "name": "Chirpie" }
+]
