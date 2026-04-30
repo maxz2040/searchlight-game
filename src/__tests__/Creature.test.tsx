@@ -15,35 +15,38 @@ const KINDS: CreatureKind[] = [
 ]
 
 describe('Creature', () => {
-  it('renders an aria-hidden svg element', () => {
+  it('renders an aria-hidden img element', () => {
     const { container } = render(<Creature kind="leaf-pup" found />)
-    const svg = container.querySelector('svg')
-    expect(svg).toBeTruthy()
-    expect(svg!.getAttribute('aria-hidden')).toBe('true')
+    const img = container.querySelector('img')
+    expect(img).toBeTruthy()
+    expect(img!.getAttribute('aria-hidden')).toBe('true')
   })
 
-  it.each(KINDS)('renders a unique shape for kind %s', (kind) => {
+  it.each(KINDS)('renders a kind-specific sprite URL for %s', (kind) => {
     const { container } = render(<Creature kind={kind} found />)
-    const svg = container.querySelector('svg')!
-    // Every kind has at least one fill attribute on a child shape.
-    const filled = svg.querySelectorAll('[fill]')
-    expect(filled.length).toBeGreaterThan(0)
+    const img = container.querySelector('img') as HTMLImageElement
+    expect(img.getAttribute('src')).toBe(`/creatures/${kind}.png`)
   })
 
-  it('uses dimmed silhouette colours when not found', () => {
+  it('applies a flat-silhouette filter when not found', () => {
     const { container } = render(<Creature kind="leaf-pup" found={false} />)
-    const svg = container.querySelector('svg') as SVGElement
-    // Style opacity should be lower when hidden.
-    const opacity = parseFloat(svg.style.opacity || '1')
-    expect(opacity).toBeLessThan(1)
-    // The body fill should be the silhouette colour, not the bright palette.
-    const ellipse = svg.querySelector('ellipse[fill]') as SVGElement | null
-    expect(ellipse?.getAttribute('fill')).toBe('#0e1426')
+    const img = container.querySelector('img') as HTMLImageElement
+    // brightness(0.18) saturate(0) collapses the sprite to a near-solid shadow
+    // — the kid sees a hideable shape but no colour information.
+    expect(img.style.filter).toContain('brightness(')
+    expect(img.style.filter).toContain('saturate(0)')
   })
 
-  it('uses bright palette colours when found', () => {
+  it('applies a drop-shadow when found', () => {
     const { container } = render(<Creature kind="leaf-pup" found />)
-    const ellipse = container.querySelector('ellipse[fill]') as SVGElement
-    expect(ellipse.getAttribute('fill')).toBe('#4ade80')
+    const img = container.querySelector('img') as HTMLImageElement
+    expect(img.style.filter).toContain('drop-shadow')
+  })
+
+  it('is non-draggable and non-interactive', () => {
+    const { container } = render(<Creature kind="bolt-bunny" found />)
+    const img = container.querySelector('img') as HTMLImageElement
+    expect(img.getAttribute('draggable')).toBe('false')
+    expect(img.className).toContain('pointer-events-none')
   })
 })
