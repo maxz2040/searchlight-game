@@ -167,32 +167,36 @@ function TargetVignette({
         {target ? (
           <motion.div
             key={target.id}
-            initial={{ opacity: 0, scale: 0.7, x: -8 }}
+            initial={{ opacity: 0, scale: 0.85, x: -8 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: -6 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+            exit={{ opacity: 0, scale: 0.92, y: -6 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 28 }}
             className="flex flex-col items-center gap-1.5"
           >
-            <div className="rounded-full bg-spotlight-warm/95 px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-night-deep shadow-md">
-              Find this!
+            {/* "Find this" caps label — solid lantern surface, no alpha-95
+                glassmorphism. Caps tracking 18% per impeccable. */}
+            <div className="rounded-full bg-spotlight-edge px-3 py-0.5 text-[0.75rem] font-bold uppercase tracking-[0.18em] text-night-deep shadow-md">
+              Find this
             </div>
-            <div className="relative h-28 w-28 rounded-3xl bg-paper/95 p-1.5 shadow-2xl ring-4 ring-spotlight-warm/70 sm:h-24 sm:w-24">
+            <div className="surface-card relative h-28 w-28 rounded-3xl p-1.5 shadow-2xl sm:h-24 sm:w-24">
+              {/* Warm halo behind — the lantern flame quietly breathing. */}
               <div className="absolute inset-0 -z-10 rounded-3xl bg-spotlight-warm/40 blur-xl animate-pulse-soft" />
               <Creature kind={target.kind} found />
             </div>
-            <div className="rounded-full bg-night/85 px-3 py-1 text-base font-bold text-paper backdrop-blur-sm shadow">
+            <div className="surface-chrome-strong rounded-full px-3 py-1 text-base font-semibold text-paper shadow">
               {target.name}
             </div>
           </motion.div>
         ) : (
           <motion.div
             key="all-found"
-            initial={{ opacity: 0, scale: 0.7 }}
+            initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-1.5 rounded-2xl bg-leaf/90 px-4 py-2 text-base font-bold text-night-deep shadow-lg"
+            transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+            className="surface-chrome-strong flex items-center gap-1.5 rounded-2xl px-4 py-2 text-base font-semibold text-paper shadow-lg"
           >
-            <SparkleIcon className="h-5 w-5" />
-            All found!
+            <SparkleIcon className="h-5 w-5 text-spotlight-edge" />
+            All found
           </motion.div>
         )}
       </AnimatePresence>
@@ -203,10 +207,13 @@ function TargetVignette({
 function SceneHud({ title }: { title: string }) {
   return (
     <div className="pointer-events-none absolute top-3 left-4 right-4 flex items-start justify-between safe-top z-10">
-      {/* Title sits in a soft paper-haloed pill so it stays legible on any
-          scene (the AI-generated backgrounds vary in luminance). */}
-      <div className="rounded-2xl bg-night/55 px-4 py-1.5 backdrop-blur-md shadow-lg ring-1 ring-paper/20">
-        <h1 className="font-display text-2xl font-bold text-paper drop-shadow-lg">{title}</h1>
+      {/* Title plate — solid warm-tinted-night surface, no backdrop-blur
+          glassmorphism (banned-pattern fix). Demoted to <h2> because there
+          is already an <h1> on the page in the tutorial; one h1 per page. */}
+      <div className="surface-chrome-strong rounded-2xl px-4 py-1.5 shadow-lg">
+        <h2 className="font-display text-[1.333rem] font-semibold text-paper tracking-[-0.005em]">
+          {title}
+        </h2>
       </div>
     </div>
   );
@@ -216,34 +223,38 @@ function ProgressPill({ found, total }: { found: number; total: number }) {
   const remaining = total - found;
   const pct = total === 0 ? 0 : Math.round((found / total) * 100);
   const allDone = remaining === 0;
+  // Hold the pill at a stable min-width so the trailing copy
+  // ("all found" / "one to go" / "found") doesn't jitter the layout.
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={`progress-${found}-${total}`}
-        initial={{ opacity: 0, y: -8 }}
+        initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 8 }}
-        transition={{ duration: 0.3 }}
-        className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 rounded-2xl bg-night/80 px-5 py-2 backdrop-blur-sm shadow-lg ring-1 ring-paper/15 safe-top z-10"
+        exit={{ opacity: 0, y: 6 }}
+        transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+        className="surface-chrome-strong absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 rounded-2xl px-5 py-2 min-w-[148px] shadow-lg safe-top z-10"
       >
-        <div className="flex items-baseline gap-1.5 text-paper">
-          <span className="font-display text-xl font-extrabold tabular-nums text-spotlight-warm">
+        <div className="flex items-baseline gap-1.5 text-paper tabular-nums">
+          <span className="font-display text-[1.333rem] font-bold text-spotlight-edge">
             {found}
           </span>
-          <span className="text-sm font-semibold text-paper/70">/</span>
-          <span className="font-display text-base font-bold tabular-nums text-paper/85">
+          <span className="text-sm font-medium text-paper/65">/</span>
+          <span className="font-display text-base font-semibold text-paper/85">
             {total}
           </span>
-          <span className="ml-1 text-sm font-semibold text-paper/85">
-            {allDone ? 'all found!' : remaining === 1 ? 'one to go' : 'found'}
+          <span className="ml-1 text-sm font-medium text-paper/85 tabular-nums">
+            {allDone ? 'all found' : remaining === 1 ? 'one to go' : 'found'}
           </span>
         </div>
+        {/* Progress wick — burns down warm. Solid lantern colour, no rainbow
+            gradient. Easing matches the project's ease-entry token. */}
         <div className="h-1.5 w-32 overflow-hidden rounded-full bg-paper/15">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-spotlight-warm to-spotlight-edge"
+            className="h-full rounded-full bg-spotlight-edge"
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
       </motion.div>
@@ -271,9 +282,13 @@ function RemainingTray({
   // wraps cleanly on portrait.
   const cols = Math.min(creatures.length, 9);
   return (
-    <div className="pointer-events-none absolute bottom-4 right-4 safe-bottom z-10 max-w-[88%]">
+    <div
+      className="pointer-events-none absolute bottom-4 right-4 safe-bottom z-10 max-w-[88%]"
+      aria-label="Creatures found"
+      role="group"
+    >
       <div
-        className="grid gap-2 rounded-3xl bg-night/85 p-2.5 ring-1 ring-paper/15 shadow-2xl backdrop-blur-md"
+        className="surface-chrome-strong grid gap-2 rounded-3xl p-2.5 shadow-2xl"
         style={{
           gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
         }}
@@ -283,17 +298,18 @@ function RemainingTray({
           return (
             <div
               key={c.id}
-              className={`relative h-14 w-14 overflow-hidden rounded-2xl transition-all duration-300 ${
+              className={`relative h-14 w-14 overflow-hidden rounded-2xl transition-[background-color,box-shadow] duration-[260ms] ${
                 isFound
-                  ? 'bg-paper/95 ring-2 ring-spotlight-warm shadow-md'
-                  : 'bg-night-deep/90 ring-2 ring-paper/25'
+                  ? 'surface-card shadow-md ring-2 ring-spotlight-edge'
+                  : 'bg-[oklch(11%_0.03_275/0.85)] ring-2 ring-[oklch(96%_0.018_80/0.22)]'
               }`}
+              aria-label={isFound ? c.name : 'hidden'}
               title={isFound ? c.name : 'hidden'}
             >
               {/* Found check-glow — soft warm halo so the kid feels rewarded
                   every time their eye scans the tray. */}
               {isFound && (
-                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-spotlight-warm/15" />
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-spotlight-warm/18" />
               )}
               <Creature kind={c.kind} found={isFound} />
             </div>

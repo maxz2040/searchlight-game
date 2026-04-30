@@ -64,6 +64,7 @@ export function Complete() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
         className="absolute inset-0 z-30 bg-night-deep"
       >
         <video
@@ -76,19 +77,22 @@ export function Complete() {
           onError={() => setPhase('card')}
           className="h-full w-full object-cover"
         />
-        {/* Subtle "you found them all" caption layered on the video. */}
+        {/* Subtle "you found them all" caption layered on the video. Solid
+            surface-chrome instead of bg-night + backdrop-blur stack. */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="absolute top-8 left-1/2 -translate-x-1/2 rounded-full bg-night/80 px-6 py-2 text-paper font-display text-2xl font-bold backdrop-blur-sm safe-top shadow-2xl ring-1 ring-paper/20"
+          transition={{ delay: 0.4, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+          className="surface-chrome-strong absolute top-8 left-1/2 -translate-x-1/2 rounded-full px-6 py-2 text-paper font-display text-[1.778rem] font-semibold safe-top shadow-2xl"
         >
-          You found them all!
+          You found them all
         </motion.div>
-        {/* Skip-to-celebration button bottom-right (kid agency). 48-px target. */}
+        {/* Skip-to-celebration button bottom-right (kid agency). 48-px target.
+            Now uses brass accent (warm family) instead of paper-on-near-black,
+            which avoided readable contrast but read as cliché. */}
         <button
           onClick={() => setPhase('card')}
-          className="absolute bottom-6 right-6 inline-flex min-h-[48px] min-w-[88px] items-center justify-center gap-1.5 rounded-full bg-paper/95 px-5 py-2 text-base font-bold text-night shadow-lg active:scale-95 transition-transform safe-bottom"
+          className="absolute bottom-6 right-6 inline-flex min-h-[48px] min-w-[88px] items-center justify-center gap-1.5 rounded-full bg-accent px-5 py-2 text-base font-semibold text-paper shadow-lg active:scale-95 transition-transform safe-bottom"
         >
           Skip
           <PlayIcon className="h-4 w-4" />
@@ -101,50 +105,57 @@ export function Complete() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-night-deep/95 backdrop-blur-sm safe-bottom safe-top overflow-y-auto py-10"
+      transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+      className="surface-overlay absolute inset-0 z-30 flex flex-col items-center justify-center backdrop-blur-sm safe-bottom safe-top overflow-y-auto py-10"
     >
       <div className="flex max-w-md flex-col items-center gap-6 px-6 text-center">
         <motion.div
-          initial={{ scale: 0.4, rotate: -8, opacity: 0 }}
-          animate={{ scale: 1, rotate: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 14 }}
+          initial={{ scale: 0.84, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 28 }}
           className="relative h-24 w-24"
         >
-          <div className="absolute inset-0 rounded-full bg-spotlight-warm/40 blur-3xl" />
+          <div className="absolute inset-[-15%] rounded-full bg-spotlight-warm/35 blur-3xl animate-pulse-soft" />
+          <div className="absolute inset-[-5%] rounded-full bg-spotlight-warm/45 blur-2xl" />
           <ConfettiIcon className="relative h-full w-full drop-shadow-2xl" />
         </motion.div>
         <motion.h2
-          initial={{ y: 12, opacity: 0 }}
+          initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.18 }}
-          className="font-display text-4xl font-bold text-paper"
+          transition={{ delay: 0.16, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+          className="font-display text-[2.369rem] font-semibold text-paper leading-[1.1]"
         >
-          You found them all!
+          You found them all
         </motion.h2>
         <motion.p
-          initial={{ y: 12, opacity: 0 }}
+          initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.28 }}
-          className="text-lg text-paper/80"
+          transition={{ delay: 0.24, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+          className="text-[1.0625rem] text-paper/80 tabular-nums"
         >
           {level.title} · {formatMs(elapsed)}
         </motion.p>
 
         <motion.div
-          initial={{ y: 12, opacity: 0 }}
+          initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-5 gap-3 rounded-2xl bg-night/50 p-4 ring-1 ring-paper/15 shadow-xl"
+          transition={{ delay: 0.34, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+          className="surface-chrome-strong grid grid-cols-5 gap-3 rounded-2xl p-4 shadow-xl"
         >
           {level.creatures.map((c, i) => (
             <motion.div
               key={c.id}
-              initial={{ scale: 0, rotate: -20 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.55 + i * 0.06, type: 'spring', stiffness: 280, damping: 14 }}
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                delay: 0.5 + i * 0.05,
+                type: 'spring',
+                stiffness: 200,
+                damping: 28,
+              }}
               className="flex flex-col items-center gap-1"
             >
-              <div className="h-14 w-14 rounded-2xl bg-paper/95 p-1 shadow-md ring-1 ring-spotlight-warm/40">
+              <div className="surface-card h-14 w-14 rounded-2xl p-1 shadow-md">
                 <Creature kind={c.kind} found />
               </div>
               <div className="text-xs font-semibold text-paper/85">{c.name}</div>
@@ -153,20 +164,20 @@ export function Complete() {
         </motion.div>
 
         <motion.div
-          initial={{ y: 12, opacity: 0 }}
+          initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.85 }}
+          transition={{ delay: 0.78, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
           className="mt-2 flex flex-wrap items-center justify-center gap-3"
         >
           <button
             onClick={replay}
-            className="min-h-[56px] min-w-[140px] rounded-full bg-night/60 px-6 py-3 text-lg font-semibold text-paper border border-paper/30 active:scale-95 transition-transform"
+            className="surface-chrome min-h-[56px] min-w-[140px] rounded-full px-6 py-3 text-lg font-semibold text-paper active:scale-95 transition-transform duration-[120ms]"
           >
             Play again
           </button>
           <button
             onClick={next}
-            className="inline-flex min-h-[56px] min-w-[140px] items-center justify-center gap-1.5 rounded-full bg-accent px-6 py-3 text-lg font-bold text-paper shadow-lg active:scale-95 transition-transform"
+            className="inline-flex min-h-[56px] min-w-[140px] items-center justify-center gap-1.5 rounded-full bg-accent px-6 py-3 text-lg font-semibold text-paper shadow-lg active:scale-95 transition-transform duration-[120ms]"
           >
             Next level
             <ArrowRightIcon className="h-5 w-5" />

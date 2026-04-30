@@ -5,7 +5,9 @@ import { Loader } from '../components/Loader'
 describe('Loader', () => {
   it('renders the lantern label and progress bar', () => {
     render(<Loader onReady={() => {}} />)
-    expect(screen.getByText(/tuning the lantern/i)).toBeInTheDocument()
+    // Copy: "Lighting the lantern…" (v3 impeccable copy update — quieter
+    // active verb matching the bedtime shape brief).
+    expect(screen.getByText(/lighting the lantern/i)).toBeInTheDocument()
   })
 
   it('starts at 0% width', () => {

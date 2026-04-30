@@ -1,21 +1,123 @@
-/* Pokemon Searchlight Edition — global styles.
-   Tailwind v4 + custom CSS variables for the kid-friendly palette.
-   No-scroll, full-viewport, touch-action none on the play surface. */
+/* Searchlight Edition — global styles.
+   Tailwind v4 + OKLCH primitives + semantic tokens.
+   Shape brief: docs/impeccable-shape.md (paper-lantern-at-bedtime).
+   Critique log: docs/impeccable-critique.md.
+
+   The play surface is no-scroll, full-viewport, touch-action: none. */
+
 @import "tailwindcss";
 
-@theme {
-  --color-night: #0a0d1f;
-  --color-night-deep: #050714;
-  --color-spotlight-warm: #fff4c8;
-  --color-spotlight-edge: #ffd070;
-  --color-paper: #fff8e7;
-  --color-accent: #ff6b9d;
-  --color-leaf: #4ade80;
-  --color-sky: #93c5fd;
-  --font-display: "Fredoka", "SF Pro Rounded", system-ui, sans-serif;
-  --font-body: "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+/* ---------------------------------------------------------------------------
+   @font-face — Fraunces (display, variable serif) + Nunito (body, humanist
+   sans).
+
+   The woff2 files belong in /public/fonts/ (offline-first, avoids Google
+   Fonts dependency on iPad). Until they ship, the metric-matched local
+   fallbacks (Georgia for Fraunces — both have similar x-height + ascender
+   ratios; Verdana for Nunito) are used directly. `size-adjust` /
+   `ascent-override` are tuned so when the woff2 lands the swap is visually
+   undetectable.
+
+   We use ONLY `local()` srcs here so there is no 404 noise in dev/prod.
+   When the woff2 ships, append the url() form with format("woff2-variations").
+*/
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: local("Fraunces"), local("Georgia");
+  size-adjust: 100%;
+  ascent-override: 95%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: local("Nunito"), local("Verdana");
+  size-adjust: 96%;
+  ascent-override: 105%;
+  descent-override: 28%;
+  line-gap-override: 0%;
+}
+
+/* ---------------------------------------------------------------------------
+   Tailwind theme tokens. Names retained from v1/v2 so existing class strings
+   in the components keep working; VALUES rewritten to OKLCH per the impeccable
+   shape brief. Hue chosen: warm-tungsten amber (~70) for the lantern, warm-
+   indigo (~275) for night neutrals (tinted toward the brand across the wheel
+   so warm + cool agree).
+
+   Banned-pattern fixes vs v2:
+   - No pure black on the body surface: --color-night-deep is now a tinted
+     oklch(11% 0.03 275) instead of #050714.
+   - --color-accent moved off hot-pink (#ff6b9d) onto brass (lantern-700) to
+     keep the palette in a single warm hue family (Restrained stance).
+   - --color-paper warmed slightly so it agrees with the tungsten flame.
+   - Display/body fonts: Fraunces (storybook serif) + Nunito (humanist sans)
+     replace the Fredoka + SF Pro Rounded reflex pair.
+*/
+@theme {
+  /* Brand primitives — OKLCH, single warm-amber hue family. */
+  --color-night-deep:    oklch(11% 0.03  275);   /* deepest room (was #050714) */
+  --color-night:         oklch(18% 0.035 275);   /* secondary night */
+  --color-spotlight-warm: oklch(96% 0.04  82);   /* lantern-100 — warm core */
+  --color-spotlight-edge: oklch(82% 0.16  72);   /* lantern-500 — flame edge */
+  --color-paper:         oklch(96% 0.018 80);    /* warm ivory */
+  --color-accent:        oklch(64% 0.16  58);    /* lantern-700 — brass CTA */
+  /* Legacy decorative slots retained so SVG/Tailwind references resolve.
+     We deliberately re-tone them into the warm family rather than keeping the
+     v2 rainbow pink/green/blue. The "leaf" and "sky" tokens still exist so
+     callers don't break, but they no longer disagree with the brand. */
+  --color-leaf:          oklch(74% 0.12  92);    /* warm gold-green */
+  --color-sky:           oklch(82% 0.06  72);    /* warm pale amber */
+
+  /* Display + body fonts. Fallback chains use the metric-matched fallback
+     declared above so the swap is invisible. */
+  --font-display: "Fraunces", "Fraunces Fallback", Georgia, "Times New Roman",
+                  serif;
+  --font-body:    "Nunito",   "Nunito Fallback",   Verdana, system-ui, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Semantic / motion tokens. Components reference these via `var(--…)` for the
+   handful of cases (motion, focus ring, modular-scale step) where Tailwind
+   utilities aren't enough. Two-layer architecture per the impeccable skill.
+*/
+:root {
+  /* Modular type scale: 1.333 (perfect fourth). 5 sizes committed. */
+  --text-xs:      0.75rem;    /* 12px */
+  --text-sm:      0.875rem;   /* 14px */
+  --text-base:    1rem;       /* 16px — body floor */
+  --text-lg:      1.333rem;   /* 21.3px */
+  --text-xl:      1.778rem;   /* 28.4px */
+  --text-display: 2.369rem;   /* 37.9px */
+
+  /* Motion — bucketed timing + deliberate easings. Bounce/elastic banned. */
+  --motion-instant:  120ms;
+  --motion-state:    260ms;
+  --motion-layout:   420ms;
+  --motion-entrance: 640ms;
+  --ease-entry:      cubic-bezier(0.16, 1, 0.3, 1);    /* expo-out */
+  --ease-exit:       cubic-bezier(0.7, 0, 0.84, 0);    /* expo-in */
+  --ease-toggle:     cubic-bezier(0.65, 0, 0.35, 1);   /* expo-in-out */
+
+  /* Surface tokens — replace the alpha soup. Components prefer these. */
+  --surface-chrome:        oklch(20% 0.035 275 / 0.78);  /* HUD pills */
+  --surface-chrome-strong: oklch(14% 0.03  275 / 0.92);  /* tray, target */
+  --surface-card:          oklch(96% 0.018 80  / 0.95);  /* found tile */
+  --surface-overlay:       oklch(11% 0.03  275 / 0.92);  /* full-screen overlays */
+  --border-soft:           oklch(96% 0.018 80  / 0.18);
+  --border-mid:            oklch(96% 0.018 80  / 0.28);
+  --border-warm:           oklch(82% 0.16  72  / 0.55);
+}
+
+/* ---------------------------------------------------------------------------
+   Document defaults. */
 html,
 body,
 #root {
@@ -26,7 +128,10 @@ body,
   background: var(--color-night-deep);
   color: var(--color-paper);
   font-family: var(--font-body);
+  font-size: 1rem;          /* 16px floor — never px on body */
+  line-height: 1.5;          /* drives the vertical rhythm */
   font-feature-settings: "ss01", "kern", "liga";
+  font-optical-sizing: auto; /* variable-font picks the right master */
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   user-select: none;
@@ -34,6 +139,21 @@ body,
   -webkit-touch-callout: none;
   /* iPad-friendly: disable double-tap zoom on the game surface */
   touch-action: none;
+}
+
+/* Polish primitives — almost nobody enables these; transformative for kids
+   reading short labels at arm's length. */
+h1, h2, h3 {
+  text-wrap: balance;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.005em;
+}
+p {
+  text-wrap: pretty;
+}
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* The play surface MUST receive every touch/pointer event without
@@ -49,24 +169,86 @@ body,
 @layer utilities {
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
   .safe-top    { padding-top: env(safe-area-inset-top, 0); }
+
+  /* Semantic surface helpers used in hot-path HUD elements. Avoids the
+     bg-night/55 + ring-paper/15 + backdrop-blur stack ("alpha soup"). */
+  .surface-chrome        { background: var(--surface-chrome);        }
+  .surface-chrome-strong { background: var(--surface-chrome-strong); }
+  .surface-card          { background: var(--surface-card);          }
+  .surface-overlay       { background: var(--surface-overlay);       }
 }
 
-/* Animations */
+/* Keyboard focus ring — visible only for keyboard nav. Default browser ring
+   suppressed in favour of a deliberate warm-amber ring matching the brand. */
+:focus-visible {
+  outline: 2px solid oklch(82% 0.16 72);   /* lantern flame */
+  outline-offset: 3px;
+  border-radius: 9999px;
+}
+button:focus-visible {
+  outline-offset: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   Animations. Bounce/elastic easings BANNED — replaced with expo-out so the
+   motion still feels alive without overshoot. */
 @keyframes pulse-soft {
   0%, 100% { opacity: 0.85; transform: scale(1); }
   50%      { opacity: 1;    transform: scale(1.04); }
 }
-.animate-pulse-soft { animation: pulse-soft 2.4s ease-in-out infinite; }
+.animate-pulse-soft {
+  animation: pulse-soft 2.4s var(--ease-toggle) infinite;
+}
 
 @keyframes hint-pulse {
-  0%, 100% { transform: scale(1);   opacity: 0.0; }
+  0%, 100% { transform: scale(1);   opacity: 0; }
   50%      { transform: scale(1.5); opacity: 0.55; }
 }
-.animate-hint-pulse { animation: hint-pulse 1.8s ease-in-out infinite; }
+.animate-hint-pulse {
+  animation: hint-pulse 1.8s var(--ease-toggle) infinite;
+}
 
 @keyframes reveal-pop {
-  0%   { transform: scale(0.6) rotate(-8deg); opacity: 0; }
-  60%  { transform: scale(1.18) rotate(4deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0);       opacity: 1; }
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
 }
-.animate-reveal-pop { animation: reveal-pop 480ms cubic-bezier(.34, 1.56, .64, 1) both; }
+/* Was: cubic-bezier(.34, 1.56, .64, 1) — banned overshoot. Replaced with
+   expo-out so the reveal still feels alive but no longer bounces. */
+.animate-reveal-pop {
+  animation: reveal-pop var(--motion-entrance) var(--ease-entry) both;
+}
+
+/* The Expressive moment from the shape brief: spotlight bloom on reveal. A
+   soft warm halo blooms around the lantern beam, then settles. Used by the
+   Spotlight component when a creature is found. */
+@keyframes lantern-bloom {
+  0%   { filter: brightness(1)    saturate(1);    opacity: 1; }
+  35%  { filter: brightness(1.18) saturate(1.10); opacity: 1; }
+  100% { filter: brightness(1)    saturate(1);    opacity: 1; }
+}
+.animate-lantern-bloom {
+  animation: lantern-bloom var(--motion-entrance) var(--ease-toggle) both;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced-motion: degrade gracefully (don't strip — vestibular users still
+   benefit from subtle feedback, just no parallax / overshoot / pulse). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .animate-pulse-soft,
+  .animate-hint-pulse,
+  .animate-lantern-bloom {
+    animation: none !important;
+  }
+  .animate-reveal-pop {
+    /* Keep a fade — vestibular-safe, still telegraphs state change. */
+    animation: reveal-pop 0.001ms linear both !important;
+    opacity: 1 !important;
+  }
+}

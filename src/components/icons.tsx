@@ -104,40 +104,36 @@ export function PlayIcon(props: Props) {
   );
 }
 
-/** Confetti burst — used as the celebration crown on Complete card. */
+/** Lantern bloom — used as the celebration crown on Complete card.
+ *  v3 (impeccable) re-tone: every fill/stroke is in the SAME warm hue
+ *  family (paper / lantern-100 / lantern-500 / brass), no rainbow
+ *  primaries. The shape brief picks Restrained — one brand hue, neutrals
+ *  tinted toward it. The bloom reads as "the lantern just flared with
+ *  oil" instead of "party confetti" (which fights the bedtime scene).
+ *  Fills use OKLCH literals matching the index.css primitives.
+ */
 export function ConfettiIcon(props: Props) {
+  // Hue family: oklch(... 70-82) — tungsten amber.
+  const c100 = 'oklch(96% 0.04 82)';     // soft glow
+  const c300 = 'oklch(88% 0.10 76)';     // mid warm
+  const c500 = 'oklch(82% 0.16 72)';     // flame edge (brand)
+  const c700 = 'oklch(64% 0.16 58)';     // brass accent
+  const c200 = 'oklch(92% 0.07 80)';     // pale halo
   return (
     <svg viewBox="0 0 64 64" fill="none" {...props}>
-      <circle cx="32" cy="32" r="14" fill="#fff4c8" />
-      <circle cx="32" cy="32" r="9" fill="#ffd070" />
-      <path
-        d="M32 32 L 12 8"
-        stroke="#ff6b9d"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M32 32 L 56 12"
-        stroke="#4ade80"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M32 32 L 8 36"
-        stroke="#93c5fd"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M32 32 L 58 50"
-        stroke="#ff6b9d"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-      />
-      <circle cx="11" cy="11" r="2.5" fill="#ff6b9d" />
-      <circle cx="55" cy="14" r="2.2" fill="#4ade80" />
-      <circle cx="9" cy="38" r="2.2" fill="#93c5fd" />
-      <circle cx="56" cy="50" r="2.4" fill="#ffd070" />
+      {/* Lantern light radiating outward — concentric warm discs. */}
+      <circle cx="32" cy="32" r="14" fill={c100} />
+      <circle cx="32" cy="32" r="9" fill={c500} />
+      {/* Four warm rays — same hue family, varying lightness. */}
+      <path d="M32 32 L 12 8"  stroke={c700} strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M32 32 L 56 12" stroke={c500} strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M32 32 L 8 36"  stroke={c300} strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M32 32 L 58 50" stroke={c700} strokeWidth="3.5" strokeLinecap="round" />
+      {/* Spark dots — also in-family, lightness-stepped. */}
+      <circle cx="11" cy="11" r="2.5" fill={c700} />
+      <circle cx="55" cy="14" r="2.2" fill={c500} />
+      <circle cx="9"  cy="38" r="2.2" fill={c200} />
+      <circle cx="56" cy="50" r="2.4" fill={c500} />
     </svg>
   );
 }

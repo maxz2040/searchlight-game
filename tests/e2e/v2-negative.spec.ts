@@ -188,7 +188,7 @@ test.describe('v2 negative — spotlight + collision', () => {
     expect(await getFound(page)).toEqual([]);
   });
 
-  test('3. multiple overlapping bboxes — both mark after dwell', async ({ page }) => {
+  test('3. multiple overlapping bboxes — both mark after sequential dwell', async ({ page }) => {
     await gotoFresh(page);
     await page.evaluate(() => {
       const h = (
@@ -208,9 +208,12 @@ test.describe('v2 negative — spotlight + collision', () => {
       ).__searchlight.store.getState().selectLevel('lvl-1'),
     );
     await startPlaying(page);
-    // Park the spotlight on the overlap region for > dwell.
+    // Active-target gating: only one creature can mark at a time. Parking the
+    // spotlight on the overlap means `a` (first unfound) marks after 700ms,
+    // then `b` becomes the active target and ALSO marks after another 700ms
+    // since the spotlight is still on its bbox. Total ≥ 1400ms.
     await pointerTo(page, 0.41, 0.405);
-    await page.waitForTimeout(1100);
+    await page.waitForTimeout(1800);
     const found = await getFound(page);
     expect(found.sort()).toEqual(['a', 'b']);
   });

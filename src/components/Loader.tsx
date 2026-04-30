@@ -41,22 +41,31 @@ export function Loader({ onReady }: Props) {
     <div className="flex h-full w-full items-center justify-center bg-night-deep">
       <div className="flex flex-col items-center gap-7">
         <div className="relative h-32 w-32">
-          {/* Outermost atmospheric haze. */}
-          <div className="absolute inset-[-30%] rounded-full bg-spotlight-warm/15 blur-3xl animate-pulse-soft" />
+          {/* Outermost atmospheric haze — the lantern's room-glow. */}
+          <div className="absolute inset-[-30%] rounded-full bg-spotlight-warm/18 blur-3xl animate-pulse-soft" />
           {/* Mid halo. */}
-          <div className="absolute inset-[-10%] rounded-full bg-spotlight-warm/30 blur-2xl" />
-          {/* Lantern disc. */}
-          <div className="relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-spotlight-warm via-spotlight-warm to-spotlight-edge shadow-[0_0_60px_rgba(255,208,112,0.55)] text-night-deep">
+          <div className="absolute inset-[-10%] rounded-full bg-spotlight-warm/35 blur-2xl" />
+          {/* Lantern disc — solid warm-amber, no rainbow gradient (impeccable
+              banned the gradient stack on small chrome). The shape brief's
+              "iPad IS the lantern" moment lives in this halo + the disc. */}
+          <div className="relative flex h-full w-full items-center justify-center rounded-full bg-spotlight-edge text-night-deep shadow-[0_0_60px_oklch(82%_0.16_72/0.55)]">
             <LanternIcon className="h-16 w-16" />
           </div>
         </div>
-        <div className="font-display text-2xl font-bold text-paper">
-          Tuning the lantern...
+        <div className="font-display text-[1.778rem] font-semibold text-paper tracking-[-0.005em]">
+          Lighting the lantern&hellip;
         </div>
-        <div className="h-2 w-56 overflow-hidden rounded-full bg-night/80 ring-1 ring-paper/15">
+        <div
+          className="h-2 w-56 overflow-hidden rounded-full surface-chrome-strong"
+          role="progressbar"
+          aria-label="Loading"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-spotlight-warm to-spotlight-edge transition-[width] duration-150"
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full bg-spotlight-edge transition-[width] duration-[260ms]"
+            style={{ width: `${progress}%`, transitionTimingFunction: 'cubic-bezier(0.16,1,0.3,1)' }}
           />
         </div>
       </div>
