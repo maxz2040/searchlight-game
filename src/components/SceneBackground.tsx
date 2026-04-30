@@ -24,9 +24,14 @@ export function SceneBackground({ scene }: { scene: SceneKind }) {
         alt=""
         decoding="async"
         loading="eager"
+        // Intrinsic dimensions match the 16:9 source (1024×576 from
+        // public/scenes/) so the browser reserves layout box BEFORE the
+        // PNG decodes — no layout shift, no flash of unsized image.
+        width={1024}
+        height={576}
         // object-cover so portrait/landscape iPad both crop sensibly to the
-        // 16:9 source. The deep palette gives a graceful navy fallback while
-        // the PNG decodes.
+        // 16:9 source. The deep palette gives a graceful tinted-indigo
+        // fallback while the PNG decodes.
         className="absolute inset-0 h-full w-full object-cover bg-night-deep"
         // The composited scene already has its own atmospheric lighting baked
         // in. We only need a soft global dimmer + a vignette so the spotlight

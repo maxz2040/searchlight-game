@@ -43,6 +43,10 @@ export function Creature({ kind, found }: Props) {
       decoding="async"
       loading="eager"
       draggable={false}
+      // Intrinsic 1:1 dimensions kill any aspect-ratio jump while the
+      // chroma-keyed PNG decodes. Container sets visual size via class.
+      width={256}
+      height={256}
       className="h-full w-full object-contain select-none pointer-events-none"
       style={
         found
