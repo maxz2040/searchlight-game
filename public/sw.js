@@ -6,7 +6,7 @@
 // in place but `/api/scene/*` is a stub URL today; once the real
 // backend lands, this SW will transparently cache its responses.
 
-const CACHE_VERSION = 'searchlight-v1';
+const CACHE_VERSION = 'searchlight-v2-composited';
 const APP_SHELL = ['/', '/index.html', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {

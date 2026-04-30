@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "test:all": "vitest run && playwright test",
     "sprites:process": "tsx scripts/process-creature-sprites.ts",
+    "levels:rebuild": "tsx scripts/levels-from-detected.ts",
     "report:capture": "tsx scripts/capture-report.ts",
     "report:build": "tsx scripts/build-report.ts",
     "report": "npm run build && (npm run preview -- --port 8770 --host 127.0.0.1 &) && sleep 3 && npm run report:capture && npm run report:build && pkill -f 'vite preview' || true"

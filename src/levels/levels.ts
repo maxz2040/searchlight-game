@@ -1,15 +1,11 @@
-// Level data. v0 ships hand-authored placeholder scenes (rendered as
-// illustrated SVG backgrounds in src/components/SceneBackground.tsx)
-// with creature positions hand-tuned for variety.
+// Auto-generated from scratch/composite/*-creatures.json by
+// scripts/levels-from-detected.ts. Each creature's {x,y,w,h} is the
+// bounding box detected by Gemini Vision on the corresponding composited
+// scene PNG in /public/scenes/. The sprite itself is BAKED INTO the scene
+// — the overlay layer in Scene.tsx renders only the invisible hit-zone
+// for spotlight collision and the name pill that pops in on find.
 //
-// FUTURE EXTENSION (PRD §Backend):
-//   The scene "background" field will become a URL pointing at an
-//   AI-generated image (GPT-Image / SD via /api/scene). The existing
-//   structure already supports that — replace `kind: 'svg'` with
-//   `kind: 'image'` + `url: string` and the renderer will pick it up.
-//
-// Coordinates are stored as percentages (0-1) of the play surface so
-// scenes adapt to portrait, landscape, and any iPad size.
+// Re-run: npm run levels:rebuild
 
 export type CreatureKind =
   | 'leaf-pup'
@@ -52,12 +48,18 @@ export const LEVELS: Level[] = [
     id: 'lvl-1',
     title: 'Whispering Forest',
     scene: 'forest',
-    spotlight: 0.18,
+    spotlight: 0.16,
     creatures: [
-      { id: 'c1', kind: 'leaf-pup',   x: 0.15, y: 0.35, w: 0.10, h: 0.10, name: 'Leafu'   },
-      { id: 'c2', kind: 'shroom-buddy', x: 0.62, y: 0.72, w: 0.10, h: 0.10, name: 'Shroomi' },
-      { id: 'c3', kind: 'puff-bird',  x: 0.85, y: 0.22, w: 0.09, h: 0.09, name: 'Puffi'   },
-      { id: 'c4', kind: 'pebble-pal', x: 0.42, y: 0.85, w: 0.09, h: 0.09, name: 'Roxxo'   },
+      { id: 'c1', kind: 'leaf-pup', x: 0.074, y: 0.627, w: 0.149, h: 0.255, name: 'Leafu' },
+      { id: 'c2', kind: 'leaf-pup', x: 0.274, y: 0.671, w: 0.163, h: 0.07, name: 'Sprout' },
+      { id: 'c3', kind: 'shroom-buddy', x: 0.523, y: 0.655, w: 0.101, h: 0.151, name: 'Shroomi' },
+      { id: 'c4', kind: 'puff-bird', x: 0.697, y: 0.773, w: 0.101, h: 0.111, name: 'Puffi' },
+      { id: 'c5', kind: 'pebble-pal', x: 0.869, y: 0.672, w: 0.066, h: 0.06, name: 'Roxxo' },
+      { id: 'c6', kind: 'pebble-pal', x: 0.594, y: 0.757, w: 0.089, h: 0.106, name: 'Cobble' },
+      { id: 'c7', kind: 'shroom-buddy', x: 0.244, y: 0.484, w: 0.05, h: 0.074, name: 'Capper' },
+      { id: 'c8', kind: 'pebble-pal', x: 0.411, y: 0.556, w: 0.061, h: 0.088, name: 'Mossy' },
+      { id: 'c9', kind: 'shroom-buddy', x: 0.785, y: 0.483, w: 0.046, h: 0.108, name: 'Spotty' },
+      { id: 'c10', kind: 'puff-bird', x: 0.891, y: 0.497, w: 0.034, h: 0.069, name: 'Featherly' },
     ],
   },
   {
@@ -66,24 +68,30 @@ export const LEVELS: Level[] = [
     scene: 'meadow',
     spotlight: 0.16,
     creatures: [
-      { id: 'c1', kind: 'flame-cub',  x: 0.22, y: 0.62, w: 0.10, h: 0.10, name: 'Emberi'  },
-      { id: 'c2', kind: 'bolt-bunny', x: 0.78, y: 0.42, w: 0.09, h: 0.09, name: 'Voltu'   },
-      { id: 'c3', kind: 'puff-bird',  x: 0.55, y: 0.18, w: 0.09, h: 0.09, name: 'Cloudi'  },
-      { id: 'c4', kind: 'leaf-pup',   x: 0.10, y: 0.82, w: 0.10, h: 0.10, name: 'Sprout'  },
-      { id: 'c5', kind: 'shroom-buddy', x: 0.88, y: 0.85, w: 0.09, h: 0.09, name: 'Capi'  },
+      { id: 'c1', kind: 'leaf-pup', x: 0.491, y: 0.07, w: 0.099, h: 0.139, name: 'Leafu' },
+      { id: 'c2', kind: 'puff-bird', x: 0.683, y: 0.192, w: 0.154, h: 0.175, name: 'Puffi' },
+      { id: 'c3', kind: 'bolt-bunny', x: 0.611, y: 0.338, w: 0.203, h: 0.238, name: 'Zappo' },
+      { id: 'c4', kind: 'bolt-bunny', x: 0.583, y: 0.434, w: 0.181, h: 0.194, name: 'Sparky' },
+      { id: 'c5', kind: 'flame-cub', x: 0.795, y: 0.513, w: 0.168, h: 0.19, name: 'Emberi' },
+      { id: 'c6', kind: 'leaf-pup', x: 0.626, y: 0.675, w: 0.163, h: 0.174, name: 'Sprout' },
+      { id: 'c7', kind: 'leaf-pup', x: 0.525, y: 0.515, w: 0.098, h: 0.107, name: 'Mintly' },
+      { id: 'c8', kind: 'flame-cub', x: 0.454, y: 0.873, w: 0.116, h: 0.161, name: 'Cinder' },
     ],
   },
   {
     id: 'lvl-3',
     title: 'Starlit Shore',
     scene: 'beach',
-    spotlight: 0.14,
+    spotlight: 0.16,
     creatures: [
-      { id: 'c1', kind: 'aqua-spark', x: 0.35, y: 0.55, w: 0.10, h: 0.10, name: 'Splashu' },
-      { id: 'c2', kind: 'star-fish',  x: 0.18, y: 0.78, w: 0.09, h: 0.09, name: 'Twinki'  },
-      { id: 'c3', kind: 'pebble-pal', x: 0.82, y: 0.78, w: 0.09, h: 0.09, name: 'Sandi'   },
-      { id: 'c4', kind: 'bolt-bunny', x: 0.65, y: 0.30, w: 0.09, h: 0.09, name: 'Zappi'   },
-      { id: 'c5', kind: 'puff-bird',  x: 0.50, y: 0.10, w: 0.09, h: 0.09, name: 'Skye'    },
+      { id: 'c1', kind: 'star-fish', x: 0.26, y: 0.694, w: 0.106, h: 0.087, name: 'Twinkli' },
+      { id: 'c2', kind: 'aqua-spark', x: 0.408, y: 0.458, w: 0.106, h: 0.13, name: 'Splashu' },
+      { id: 'c3', kind: 'puff-bird', x: 0.648, y: 0.598, w: 0.081, h: 0.115, name: 'Puffi' },
+      { id: 'c4', kind: 'aqua-spark', x: 0.778, y: 0.566, w: 0.094, h: 0.12, name: 'Drizzle' },
+      { id: 'c5', kind: 'pebble-pal', x: 0.86, y: 0.7, w: 0.111, h: 0.124, name: 'Roxxo' },
+      { id: 'c6', kind: 'pebble-pal', x: 0.867, y: 0.576, w: 0.072, h: 0.093, name: 'Cobble' },
+      { id: 'c7', kind: 'puff-bird', x: 0.932, y: 0.498, w: 0.089, h: 0.104, name: 'Featherly' },
+      { id: 'c8', kind: 'star-fish', x: 0.889, y: 0.423, w: 0.092, h: 0.107, name: 'Glimmer' },
     ],
   },
 ];

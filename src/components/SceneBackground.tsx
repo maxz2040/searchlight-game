@@ -28,16 +28,19 @@ export function SceneBackground({ scene }: { scene: SceneKind }) {
         // 16:9 source. The deep palette gives a graceful navy fallback while
         // the PNG decodes.
         className="absolute inset-0 h-full w-full object-cover bg-night-deep"
-        style={{ filter: 'brightness(0.62) saturate(1.08)' }}
+        // The composited scene already has its own atmospheric lighting baked
+        // in. We only need a soft global dimmer + a vignette so the spotlight
+        // sweep has enough darkness to "reveal" against. Less aggressive than
+        // the v0 brightness:0.62 because the painted creatures themselves
+        // need to read clearly within the spotlight beam.
+        style={{ filter: 'brightness(0.55) saturate(1.04)' }}
       />
-      {/* Subtle vignette so the spotlight beam reads as the only light source.
-          Tuned by hand — too dark and the AI detail disappears, too light and
-          the searchlight effect goes flat. */}
+      {/* Stronger vignette than v0 to make the spotlight beam pop. */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse at center, rgba(5, 7, 20, 0) 35%, rgba(5, 7, 20, 0.55) 100%)',
+            'radial-gradient(ellipse at center, rgba(5, 7, 20, 0) 28%, rgba(5, 7, 20, 0.70) 100%)',
         }}
       />
     </div>

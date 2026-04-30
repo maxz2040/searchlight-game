@@ -67,9 +67,12 @@ export function Scene() {
       >
         <SceneBackground scene={level.scene} />
 
-        {/* Creatures positioned absolutely as % of the surface. The
-            Creature component renders silhouette vs revealed based on
-            `found`. */}
+        {/* Creatures are PAINTED INTO the scene background (composited via
+            Higgsfield nano_banana_2 at build time — see docs/v1-compositing.md).
+            We render an invisible hit-zone div per creature for the spotlight
+            collision logic in Spotlight.tsx, plus the reveal name pill once
+            found. No sprite render here — the sprite IS the scene.
+            data-testid kept for E2E tests. */}
         {level.creatures.map((c) => {
           const isFound = found.has(c.id);
           const isHinted = hintFor === c.id && !isFound;
@@ -87,14 +90,16 @@ export function Scene() {
               data-testid={`creature-${c.id}`}
               data-found={isFound ? 'true' : 'false'}
             >
+              {/* Idle-hint glow nudges the kid toward the next unfound area. */}
               {isHinted && (
                 <div className="absolute inset-0 rounded-full bg-spotlight-warm/60 blur-2xl animate-hint-pulse" />
               )}
-              <div className={isFound ? 'animate-reveal-pop' : ''}>
-                <Creature kind={c.kind} found={isFound} />
-              </div>
+              {/* On-find sparkle ring drawn in front of the painted creature. */}
               {isFound && (
-                <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-paper/90 px-3 py-1 text-sm font-semibold text-night animate-pulse-soft">
+                <div className="absolute inset-0 rounded-full ring-4 ring-spotlight-warm/70 ring-offset-2 ring-offset-transparent animate-reveal-pop" />
+              )}
+              {isFound && (
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-paper/95 px-3 py-1 text-sm font-bold text-night shadow-lg animate-pulse-soft">
                   {c.name}
                 </div>
               )}
@@ -146,13 +151,15 @@ function RemainingTray({
   found: Set<string>;
 }) {
   return (
-    <div className="pointer-events-none absolute bottom-4 right-4 flex gap-2 rounded-2xl bg-night/60 p-2 backdrop-blur-sm safe-bottom">
+    <div className="pointer-events-none absolute bottom-4 right-4 flex flex-wrap gap-2 rounded-2xl bg-night/70 p-2 backdrop-blur-sm safe-bottom max-w-[60%] justify-end">
       {creatures.map((c) => {
         const isFound = found.has(c.id);
         return (
           <div
             key={c.id}
-            className={`h-12 w-12 rounded-full ${isFound ? 'bg-paper/90' : 'bg-night/80 border border-paper/30'}`}
+            className={`h-11 w-11 overflow-hidden rounded-full transition-colors ${
+              isFound ? 'bg-paper/90 ring-2 ring-spotlight-edge' : 'bg-night/80 border border-paper/30'
+            }`}
             title={isFound ? c.name : 'hidden'}
           >
             <Creature kind={c.kind} found={isFound} />
