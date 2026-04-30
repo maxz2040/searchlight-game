@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pokemon Searchlight v1 — Avatar Flow Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ───── palette (matches v0 src/index.css) ───── */
+  :root{
+    --night:#0a0d1f;
+    --night-deep:#050714;
+    --paper:#fff8e7;
+    --warm:#fff4c8;        /* spotlight-warm */
+    --edge:#ffd070;        /* spotlight-edge */
+    --accent:#ff6b9d;
+    --leaf:#4ade80;
+    --sky:#93c5fd;
+    --display:'Fredoka', system-ui, sans-serif;
+    --body:-apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Fredoka', sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#161a2c;color:var(--paper);font-family:var(--body)}
+  body{
+    min-height:100vh;
+    padding:48px 24px 96px;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(147,197,253,.06), transparent 50%),
+      radial-gradient(circle at 80% 90%, rgba(255,107,157,.05), transparent 50%),
+      #0d1124;
+  }
+
+  /* ───── page header ───── */
+  .page-head{max-width:920px;margin:0 auto 40px;text-align:center}
+  .page-head h1{
+    font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:-.5px;
+    margin:0 0 8px;color:var(--paper);
+  }
+  .page-head p{margin:0;color:rgba(255,248,231,.55);font-size:15px}
+  .page-head .swatch-row{
+    display:inline-flex;gap:6px;margin-top:14px;
+    background:rgba(255,255,255,.04);padding:6px 10px;border-radius:999px;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,248,231,.4)
+  }
+  .page-head .swatch-row span{display:flex;align-items:center;gap:6px}
+  .page-head .swatch-row i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+  /* ───── prototype shell (iPad portrait 834×1194) ───── */
+  .stage-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));
+    gap:48px 32px;
+    max-width:1760px;margin:0 auto;
+  }
+  .stage{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .ipad{
+    width:min(417px, 100%);              /* 50% of 834 */
+    aspect-ratio: 834 / 1194;
+    border-radius:42px;
+    background:#000;
+    padding:14px;
+    box-shadow:
+      0 30px 80px -20px rgba(0,0,0,.7),
+      0 0 0 2px rgba(255,255,255,.04),
+      inset 0 0 0 2px rgba(255,255,255,.05);
+    position:relative;
+  }
+  .ipad::before{
+    /* camera dot */
+    content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);
+    width:8px;height:8px;border-radius:50%;background:#1a1d2e;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+    z-index:5;
+  }
+  .screen{
+    width:100%;height:100%;border-radius:30px;overflow:hidden;
+    position:relative;background:var(--night-deep);
+    user-select:none;
+  }
+
+  .caption{
+    width:min(417px,100%);
+    text-align:center;font-size:13px;color:rgba(255,248,231,.55);
+    line-height:1.5;
+    padding:0 8px;
+  }
+  .caption b{color:var(--paper);font-weight:600}
+
+  /* ───── shared scene atmosphere ───── */
+  .stars{
+    position:absolute;inset:0;pointer-events:none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,248,231,.7), transparent),
+      radial-gradient(1px 1px at 70% 20%, rgba(255,248,231,.5), transparent),
+      radial-gradient(1px 1px at 40% 70%, rgba(255,248,231,.4), transparent),
+      radial-gradient(2px 2px at 85% 60%, rgba(147,197,253,.4), transparent),
+      radial-gradient(1px 1px at 15% 85%, rgba(255,248,231,.6), transparent),
+      radial-gradient(1px 1px at 60% 90%, rgba(255,248,231,.3), transparent),
+      radial-gradient(1px 1px at 90% 35%, rgba(255,248,231,.5), transparent);
+    background-repeat:no-repeat;
+  }
+  @keyframes twinkle{0%,100%{opacity:.4}50%{opacity:1}}
+  .stars{animation:twinkle 4s ease-in-out infinite}
+
+  .firefly{
+    position:absolute;width:6px;height:6px;border-radius:50%;
+    background:var(--warm);
+    box-shadow:0 0 12px var(--warm), 0 0 24px rgba(255,244,200,.5);
+    pointer-events:none;
+  }
+  @keyframes fly1{
+    0%{transform:translate(0,0)}25%{transform:translate(40px,-30px)}
+    50%{transform:translate(80px,10px)}75%{transform:translate(20px,40px)}
+    100%{transform:translate(0,0)}
+  }
+  @keyframes fly2{
+    0%{transform:translate(0,0)}33%{transform:translate(-50px,30px)}
+    66%{transform:translate(30px,60px)}100%{transform:translate(0,0)}
+  }
+  .firefly.f1{top:18%;left:25%;animation:fly1 8s ease-in-out infinite}
+  .firefly.f2{top:60%;left:70%;animation:fly2 11s ease-in-out infinite}
+  .firefly.f3{top:35%;left:80%;animation:fly1 9s ease-in-out infinite reverse}
+
+  /* ───── 1. SPLASH ───── */
+  .splash{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 50% 35%, #1c2243 0%, var(--night) 45%, var(--night-deep) 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding:48px 32px 64px;
+    text-align:center;
+  }
+  .lantern-hero{
+    position:absolute;top:18%;left:50%;transform:translateX(-50%);
+    width:180px;height:200px;
+  }
+  @keyframes lanternSway{0%,100%{transform:translateX(-50%) rotate(-2deg)}50%{transform:translateX(-50%) rotate(2deg)}}
+  .lantern-hero{animation:lanternSway 4s ease-in-out infinite;transform-origin:50% 0}
+  .lantern-glow{
+    position:absolute;inset:-60% -60% -20% -60%;
+    background:radial-gradient(circle, rgba(255,244,200,.5) 0%, rgba(255,208,112,.2) 30%, transparent 60%);
+    pointer-events:none;
+  }
+  .splash h1{
+    font-family:var(--display);font-weight:700;font-size:46px;line-height:.95;
+    margin:0 0 12px;color:var(--paper);
+    letter-spacing:-1px;
+  }
+  .splash h1 span{color:var(--edge);display:block;font-size:30px;font-weight:600;letter-spacing:0}
+  .splash p{
+    color:rgba(255,248,231,.7);font-size:18px;margin:0 0 28px;max-width:320px
+  }
+  .cta{
+    font-family:var(--display);font-weight:700;font-size:22px;
+    background:var(--accent);color:var(--paper);
+    border:none;border-radius:999px;
+    padding:18px 40px;
+    box-shadow:0 12px 40px -8px rgba(255,107,157,.6), inset 0 -4px 0 rgba(0,0,0,.15);
+    cursor:pointer;
+    transition:transform .15s ease;
+    min-height:64px;min-width:240px;
+  }
+  .cta:active{transform:scale(.96)}
+  .cta.ghost{
+    background:transparent;color:var(--paper);
+    border:2px solid rgba(255,248,231,.3);
+    box-shadow:none;
+  }
+  .cta-row{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .cta.small{font-size:18px;padding:14px 28px;min-height:52px;min-width:180px}
+
+  /* ───── 2. CAPTURE ───── */
+  .capture{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg, var(--night-deep) 0%, #11142a 100%);
+    display:flex;flex-direction:column;
+  }
+  .topbar{
+    height:64px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;color:var(--paper);font-family:var(--display);font-weight:600;
+    flex-shrink:0;
+  }
+  .topbar .back{
+    width:44px;height:44px;border-radius:50%;
+    background:rgba(255,248,231,.08);border:none;color:var(--paper);
+    font-size:20px;cursor:pointer;
+  }
+  .topbar h2{margin:0;font-size:18px;font-weight:600}
+  .topbar .spacer{width:44px}
+
+  .camera-frame{
+    flex:1;margin:8px 24px;
+    background:#000;border-radius:32px;
+    border:3px solid var(--warm);
+    position:relative;overflow:hidden;
+    box-shadow:0 0 60px -20px var(--warm);
+  }
+  .camera-frame::before, .camera-frame::after,
+  .camera-frame .corner-tr, .camera-frame .corner-bl, .camera-frame .corner-br{
+    content:"";position:absolute;width:30px;height:30px;
+    border:3px solid var(--edge);
+  }
+  .camera-frame::before{top:14px;left:14px;border-right:none;border-bottom:none;border-radius:8px 0 0 0}
+  .camera-frame::after{top:14px;right:14px;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
+  .camera-frame .corner-bl{bottom:14px;left:14px;border-right:none;border-top:none;border-radius:0 0 0 8px}
+  .camera-frame .corner-br{bottom:14px;right:14px;border-left:none;border-top:none;border-radius:0 0 8px 0}
+
+  .preview-stub{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 50% 35%, rgba(255,244,200,.15) 0%, transparent 50%),
+      linear-gradient(180deg, #2a3050 0%, #14182d 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  /* placeholder kid silhouette */
+  .silhouette{width:60%;max-width:240px;opacity:.8}
+
+  .shutter-row{
+    height:120px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;gap:32px;
+    padding-bottom:24px;
+  }
+  .shutter{
+    width:78px;height:78px;border-radius:50%;
+    background:var(--paper);border:6px solid rgba(255,248,231,.3);
+    cursor:pointer;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    transition:transform .15s ease;
+  }
+  .shutter:active{transform:scale(.92)}
+  .icon-btn{
+    width:56px;height:56px;border-radius:50%;
+    background:rgba(255,248,231,.1);border:none;color:var(--paper);
+    font-family:var(--display);font-weight:700;font-size:13px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1;gap:2px;
+  }
+  .icon-btn span{font-size:18px}
+
+  /* ───── 3. ANIMEIFY LOADER ───── */
+  .animeify{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 50% 50%, #1d2548 0%, var(--night-deep) 70%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:32px;
+  }
+  .swirl{
+    width:200px;height:200px;position:relative;margin-bottom:32px;
+  }
+  .swirl-ring{
+    position:absolute;inset:0;border-radius:50%;
+    border:3px dashed var(--warm);
+    opacity:.6;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes spinR{to{transform:rotate(-360deg)}}
+  .swirl-ring.r1{animation:spin 6s linear infinite}
+  .swirl-ring.r2{inset:18px;border-style:solid;border-color:transparent;border-top-color:var(--accent);border-right-color:var(--accent);animation:spinR 2.4s linear infinite}
+  .swirl-ring.r3{inset:36px;border-style:solid;border-color:transparent;border-bottom-color:var(--leaf);animation:spin 3.6s linear infinite}
+  .swirl-core{
+    position:absolute;inset:60px;border-radius:50%;
+    background:radial-gradient(circle, var(--warm) 0%, var(--edge) 60%, transparent 100%);
+    box-shadow:0 0 40px var(--warm), 0 0 80px rgba(255,208,112,.6);
+    animation:pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  .animeify h2{
+    font-family:var(--display);font-weight:700;font-size:30px;margin:0 0 10px;text-align:center
+  }
+  .animeify .copy{
+    color:rgba(255,248,231,.7);font-size:16px;text-align:center;max-width:280px;margin:0 0 24px
+  }
+  .progress{
+    width:240px;height:8px;border-radius:999px;background:rgba(255,248,231,.1);overflow:hidden;
+  }
+  .progress-bar{height:100%;background:linear-gradient(90deg, var(--warm), var(--accent));border-radius:999px;width:62%;
+    box-shadow:0 0 12px var(--warm)}
+  .animeify .step{
+    margin-top:18px;font-family:var(--display);font-weight:500;font-size:14px;color:var(--edge);
+    letter-spacing:.04em;
+  }
+
+  /* ───── 4. REVEAL ───── */
+  .reveal{
+    position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 30%, #2a325c 0%, var(--night) 60%, var(--night-deep) 100%);
+    display:flex;flex-direction:column;align-items:center;
+    padding:72px 32px 32px;
+  }
+  .reveal-banner{
+    font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--edge);margin:0 0 8px;
+  }
+  .reveal h2{
+    font-family:var(--display);font-weight:700;font-size:38px;margin:0 0 24px;text-align:center
+  }
+  .avatar-stage{
+    width:240px;height:240px;position:relative;margin-bottom:20px;
+  }
+  .avatar-glow{
+    position:absolute;inset:-30%;
+    background:radial-gradient(circle, rgba(255,244,200,.4) 0%, transparent 60%);
+    animation:pulse 3s ease-in-out infinite;
+  }
+  .avatar-disk{
+    position:absolute;inset:0;border-radius:50%;
+    background:linear-gradient(160deg, var(--warm) 0%, var(--edge) 100%);
+    box-shadow:0 0 60px var(--warm), inset 0 -8px 20px rgba(0,0,0,.15);
+    overflow:hidden;display:flex;align-items:flex-end;justify-content:center;
+  }
+  .name-tag{
+    background:var(--paper);color:var(--night);
+    font-family:var(--display);font-weight:700;font-size:24px;
+    padding:10px 24px;border-radius:999px;
+    box-shadow:0 6px 20px rgba(0,0,0,.4);
+    margin-bottom:24px;
+  }
+  .name-tag em{color:var(--accent);font-style:normal;font-weight:600;font-size:14px;display:block;letter-spacing:.1em;text-transform:uppercase;margin-bottom:-2px}
+  .reveal .cta-row{margin-top:auto}
+
+  /* ───── 5. ROSTER + LEVEL SELECT ───── */
+  .roster{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg, #1a1f3d 0%, var(--night-deep) 100%);
+    display:flex;flex-direction:column;
+  }
+  .roster .topbar h2{font-size:22px}
+  .roster-strip{
+    padding:8px 20px 16px;display:flex;gap:10px;align-items:center;flex-shrink:0;
+  }
+  .roster-label{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,248,231,.5);margin-right:6px}
+  .roster-chip{
+    width:54px;height:54px;border-radius:50%;
+    background:linear-gradient(160deg,var(--warm),var(--edge));
+    box-shadow:0 4px 14px rgba(255,208,112,.4), inset 0 -3px 0 rgba(0,0,0,.1);
+    display:flex;align-items:flex-end;justify-content:center;overflow:hidden;
+    flex-shrink:0;
+  }
+  .roster-chip.add{
+    background:rgba(255,248,231,.08);border:2px dashed rgba(255,248,231,.3);
+    box-shadow:none;font-family:var(--display);font-weight:700;font-size:24px;color:var(--paper);
+    align-items:center;
+  }
+
+  .map{
+    flex:1;margin:8px 20px 16px;border-radius:24px;
+    background:
+      radial-gradient(circle at 70% 20%, rgba(147,197,253,.12), transparent 40%),
+      radial-gradient(circle at 30% 70%, rgba(74,222,128,.1), transparent 40%),
+      linear-gradient(160deg, #0e1228 0%, #1a1f3d 100%);
+    position:relative;overflow:hidden;
+    border:1px solid rgba(255,248,231,.05);
+  }
+  .map-title{
+    position:absolute;top:14px;left:18px;
+    font-family:var(--display);font-weight:600;font-size:13px;
+    letter-spacing:.16em;text-transform:uppercase;color:rgba(255,248,231,.45)
+  }
+  .path{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  .level-pin{
+    position:absolute;width:96px;
+    transform:translate(-50%,-50%);
+    cursor:pointer;
+    text-align:center;
+  }
+  .pin-lantern{
+    width:64px;height:64px;margin:0 auto 8px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .pin-lantern::after{
+    content:"";position:absolute;inset:-40%;
+    background:radial-gradient(circle,rgba(255,244,200,.4),transparent 60%);
+    pointer-events:none;
+  }
+  .pin-lantern.lit{background:linear-gradient(160deg,var(--warm),var(--edge));box-shadow:0 0 30px var(--warm)}
+  .pin-lantern.dim{background:rgba(255,248,231,.1);border:2px dashed rgba(255,248,231,.25)}
+  .pin-lantern.dim::after{display:none}
+  .level-pin .lvl-name{
+    font-family:var(--display);font-weight:600;font-size:13px;color:var(--paper);
+    line-height:1.15;
+  }
+  .level-pin .lvl-meta{font-size:10px;color:rgba(255,248,231,.5);margin-top:2px;letter-spacing:.08em;text-transform:uppercase}
+  .level-pin.locked .lvl-name{color:rgba(255,248,231,.4)}
+
+  /* ───── 6. IN-LEVEL ───── */
+  .level{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse at 50% 100%, rgba(74,222,128,.08) 0%, transparent 60%),
+      radial-gradient(circle at 30% 30%, #1a2540 0%, var(--night) 50%, var(--night-deep) 100%);
+    overflow:hidden;
+  }
+  .signpost{
+    position:absolute;top:18px;left:18px;
+    background:linear-gradient(180deg,#5a3a22,#3d2614);
+    color:var(--warm);
+    font-family:var(--display);font-weight:700;font-size:15px;
+    padding:10px 16px;border-radius:6px;
+    box-shadow:0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1);
+    transform:rotate(-2deg);
+    border:1px solid rgba(0,0,0,.3);
+    letter-spacing:.04em;
+  }
+  .counter{
+    position:absolute;top:22px;left:50%;transform:translateX(-50%);
+    background:rgba(10,13,31,.7);backdrop-filter:blur(8px);
+    color:var(--paper);font-family:var(--display);font-weight:600;font-size:14px;
+    padding:8px 16px;border-radius:999px;
+    border:1px solid rgba(255,248,231,.1);
+  }
+  .counter strong{color:var(--edge);margin-right:4px}
+
+  .spotlight{
+    position:absolute;width:280px;height:280px;
+    top:38%;left:30%;transform:translate(-50%,-50%);
+    pointer-events:none;
+  }
+  .spotlight-glow{
+    position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle, rgba(255,244,200,.55) 0%, rgba(255,208,112,.25) 40%, transparent 70%);
+  }
+  /* the kid avatar peeking out from a tree */
+  .found-pop{
+    position:absolute;left:30%;top:38%;transform:translate(-50%,-50%);
+    width:90px;height:90px;border-radius:50%;
+    background:linear-gradient(160deg,var(--warm),var(--edge));
+    box-shadow:0 0 30px var(--warm), inset 0 -4px 0 rgba(0,0,0,.15);
+    overflow:hidden;display:flex;align-items:flex-end;justify-content:center;
+    z-index:3;
+  }
+  /* the swing-down name tag */
+  .swing-tag{
+    position:absolute;left:30%;top:38%;transform:translate(-50%,40px);
+    margin-top:60px;
+    z-index:4;
+  }
+  .swing-tag::before{
+    content:"";position:absolute;left:50%;top:-30px;width:1px;height:30px;
+    background:rgba(255,248,231,.4);
+  }
+  .swing-tag .tag{
+    background:var(--paper);color:var(--night);
+    font-family:var(--display);font-weight:700;font-size:14px;
+    padding:6px 14px;border-radius:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);
+    transform:rotate(-3deg);
+    white-space:nowrap;
+    border:2px solid var(--edge);
+  }
+  .swing-tag .tag em{font-style:normal;color:var(--accent);font-size:10px;display:block;letter-spacing:.12em;text-transform:uppercase;line-height:1.2;margin-bottom:-1px}
+
+  .tray{
+    position:absolute;bottom:18px;right:18px;
+    display:flex;gap:8px;
+    background:rgba(10,13,31,.6);backdrop-filter:blur(8px);
+    padding:8px;border-radius:20px;
+    border:1px solid rgba(255,248,231,.06);
+  }
+  .tray-slot{
+    width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-weight:700;font-size:16px;
+  }
+  .tray-slot.found{background:linear-gradient(160deg,var(--warm),var(--edge));color:var(--night)}
+  .tray-slot.found.you{background:linear-gradient(160deg,var(--accent),#ff8fb8);color:var(--paper)}
+  .tray-slot.unfound{background:rgba(255,248,231,.06);color:rgba(255,248,231,.4);border:1px dashed rgba(255,248,231,.2)}
+  .tray-slot.unfound.green{box-shadow:inset 0 0 12px rgba(74,222,128,.2)}
+  .tray-slot.unfound.purple{box-shadow:inset 0 0 12px rgba(168,85,247,.2)}
+  .tray-slot.unfound.pink{box-shadow:inset 0 0 12px rgba(255,107,157,.2)}
+
+  .toast{
+    position:absolute;bottom:96px;left:50%;transform:translateX(-50%);
+    background:rgba(10,13,31,.8);backdrop-filter:blur(10px);
+    color:var(--paper);font-family:var(--display);font-weight:600;font-size:14px;
+    padding:10px 18px;border-radius:999px;
+    border:1px solid var(--accent);
+    display:flex;align-items:center;gap:10px;
+  }
+  .toast .mini-avatar{
+    width:28px;height:28px;border-radius:50%;
+    background:linear-gradient(160deg,var(--warm),var(--edge));
+    flex-shrink:0;
+  }
+
+  /* ambient layers */
+  .leaves{position:absolute;inset:0;pointer-events:none}
+  @keyframes drift{
+    0%{transform:translateY(-20px) translateX(0) rotate(0)}
+    100%{transform:translateY(140%) translateX(30px) rotate(180deg)}
+  }
+  .leaf-bit{position:absolute;width:10px;height:14px;border-radius:60% 40% 60% 40%;background:var(--leaf);opacity:.5}
+  .leaf-bit.l1{left:15%;animation:drift 14s linear infinite}
+  .leaf-bit.l2{left:55%;animation:drift 18s linear infinite;animation-delay:-4s;background:var(--accent)}
+  .leaf-bit.l3{left:80%;animation:drift 16s linear infinite;animation-delay:-9s}
+
+  /* ───── 7. COMPLETE ───── */
+  .complete{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse at 50% 110%, rgba(255,107,157,.2) 0%, transparent 50%),
+      radial-gradient(circle at 50% 30%, #1f2547 0%, var(--night) 60%, var(--night-deep) 100%);
+    display:flex;flex-direction:column;align-items:center;
+    padding:72px 24px 24px;overflow:hidden;
+  }
+  .confetti{position:absolute;inset:0;pointer-events:none}
+  .confetti i{
+    position:absolute;width:8px;height:8px;
+    animation:fall 3.6s linear infinite;
+  }
+  @keyframes fall{
+    0%{transform:translateY(-20px) rotate(0)}
+    100%{transform:translateY(120%) rotate(720deg)}
+  }
+  .complete h2{
+    font-family:var(--display);font-weight:700;font-size:38px;margin:0 0 8px;text-align:center;line-height:1
+  }
+  .ribbon{
+    background:var(--accent);color:var(--paper);
+    font-family:var(--display);font-weight:600;font-size:14px;
+    padding:6px 24px;border-radius:6px;
+    transform:rotate(-2deg);
+    box-shadow:0 4px 14px rgba(255,107,157,.4);
+    margin-bottom:24px;
+    position:relative;
+  }
+  .ribbon::before, .ribbon::after{
+    content:"";position:absolute;width:0;height:0;top:0;
+    border:14px solid transparent;border-top-color:var(--accent);
+  }
+  .ribbon::before{left:-12px;border-right-color:var(--accent);transform:rotate(0)}
+  .ribbon::after{right:-12px;border-left-color:var(--accent)}
+
+  .stage-plank{
+    width:100%;
+    background:linear-gradient(180deg,rgba(255,248,231,.04),rgba(255,248,231,.01));
+    border-top:2px solid rgba(255,208,112,.3);
+    padding:28px 12px 14px;border-radius:20px 20px 8px 8px;
+    position:relative;
+  }
+  .lineup{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:10px 6px;justify-items:center;
+  }
+  .lineup-card{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .lineup-disk{
+    width:48px;height:48px;border-radius:50%;
+    background:linear-gradient(160deg,var(--warm),var(--edge));
+    box-shadow:0 4px 10px rgba(0,0,0,.3);
+  }
+  .lineup-disk.you{background:linear-gradient(160deg,var(--accent),#ff8fb8);box-shadow:0 4px 14px rgba(255,107,157,.5);outline:2px solid var(--paper);outline-offset:2px}
+  .lineup-disk.green{background:linear-gradient(160deg,var(--leaf),#22c55e)}
+  .lineup-disk.purple{background:linear-gradient(160deg,#c084fc,#a855f7)}
+  .lineup-disk.pink{background:linear-gradient(160deg,#f9a8d4,#ec4899)}
+  .lineup-name{font-family:var(--display);font-weight:600;font-size:11px;color:var(--paper)}
+  .lineup-name.you{color:var(--accent)}
+  .complete .cta-row{margin-top:auto;padding-top:20px}
+
+  /* ───── chrome between phases ───── */
+  .step-tag{
+    position:absolute;top:8px;left:8px;
+    background:rgba(255,248,231,.08);
+    color:rgba(255,248,231,.55);
+    font-family:var(--display);font-weight:600;font-size:10px;
+    padding:4px 10px;border-radius:999px;letter-spacing:.14em;text-transform:uppercase;
+    z-index:10;border:1px solid rgba(255,248,231,.06)
+  }
+
+  /* ───── prototype controls ───── */
+  .controls{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    background:rgba(10,13,31,.85);backdrop-filter:blur(14px);
+    border:1px solid rgba(255,248,231,.1);
+    border-radius:999px;
+    padding:8px;
+    display:flex;gap:6px;align-items:center;
+    box-shadow:0 14px 40px rgba(0,0,0,.5);
+    z-index:50;
+  }
+  .controls button{
+    font-family:var(--display);font-weight:600;font-size:12px;
+    background:transparent;color:rgba(255,248,231,.7);
+    border:none;padding:8px 12px;border-radius:999px;cursor:pointer;
+    letter-spacing:.04em;
+  }
+  .controls button.active{background:var(--accent);color:var(--paper)}
+  .controls .ctl-label{
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(255,248,231,.4);padding:0 10px 0 6px;border-right:1px solid rgba(255,248,231,.08);margin-right:4px;
+  }
+
+  /* ───── interactive single-screen mode ───── */
+  body.solo .stage-grid{display:none}
+  body.solo .solo-stage{display:flex}
+  .solo-stage{display:none;flex-direction:column;align-items:center;gap:20px;margin-top:20px}
+  .solo-stage .ipad{width:min(500px, 90vw)}
+  .solo-stage .caption{width:min(500px, 90vw)}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <h1>Pokemon Searchlight — v1 Avatar Flow</h1>
+  <p>Clickable mockup of the proposed onboarding + in-level + complete experience. Portrait iPad (834×1194). Tap a tab below to step through phases.</p>
+  <div class="swatch-row">
+    <span><i style="background:#0a0d1f"></i>night</span>
+    <span><i style="background:#fff4c8"></i>warm</span>
+    <span><i style="background:#ffd070"></i>edge</span>
+    <span><i style="background:#ff6b9d"></i>accent</span>
+    <span><i style="background:#4ade80"></i>leaf</span>
+  </div>
+</header>
+
+<!-- ═══════════ ALL SEVEN STAGES (overview grid) ═══════════ -->
+<main class="stage-grid">
+
+  <!-- 1. SPLASH -->
+  <div class="stage" data-phase="splash">
+    <div class="ipad">
+      <div class="screen">
+        <div class="step-tag">1 / 7 · Splash</div>
+        <div class="splash">
+          <div class="stars"></div>
+          <div class="firefly f1"></div>
+          <div class="firefly f2"></div>
+          <div class="firefly f3"></div>
+          <div class="lantern-hero">
+            <div class="lantern-glow"></div>
+            <svg viewBox="0 0 180 200" width="180" height="200" aria-hidden="true">
+              <line x1="90" y1="0" x2="90" y2="32" stroke="#5a3a22" stroke-width="3"/>
+              <rect x="62" y="32" width="56" height="14" rx="3" fill="#5a3a22"/>
+              <path d="M58 46 L122 46 L130 158 L50 158 Z" fill="#1a1d2e" stroke="#3d2614" stroke-width="2"/>
+              <rect x="65" y="56" width="50" height="92" rx="4" fill="url(#flameGrad)"/>
+              <ellipse cx="90" cy="105" rx="14" ry="22" fill="#fff4c8"/>
+              <ellipse cx="90" cy="100" rx="8" ry="14" fill="#ffd070"/>
+              <path d="M50 158 L130 158 L132 170 L48 170 Z" fill="#3d2614"/>
+              <circle cx="90" cy="178" r="6" fill="#5a3a22"/>
+              <defs>
+                <radialGradient id="flameGrad" cx="50%" cy="60%">
+                  <stop offset="0%" stop-color="#fff4c8" stop-opacity=".9"/>
+                  <stop offset="60%" stop-color="#ffd070" stop-opacity=".4"/>
+                  <stop offset="100%" stop-color="#ff6b9d" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
+          <h1>
+            <span>Pokemon</span>
+            Searchlight
+          </h1>
+          <p>Light up the dark and find your hidden friends.</p>
+          <div class="cta-row">
+            <button class="cta">Add yourself! ✨</button>
+            <button class="cta ghost small">Maybe later</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>1 · Splash.</b> Hero lantern sways above; fireflies drift in the dim. Primary CTA is the new flow — secondary lets parents skip without guilt.</div>
+  </div>
+
+  <!-- 2. CAPTURE -->
+  <div class="stage" data-phase="capture">
+    <div class="ipad">
+      <div class="screen">
+        <div class="step-tag">2 / 7 · Capture</div>
+        <div class="capture">
+          <div class="topbar">
+            <button class="back">‹</button>
+            <h2>Take a photo</h2>
+            <div class="spacer"></div>
+          </div>
+          <div class="camera-frame">
+            <span class="corner-bl"></span><span class="corner-br"></span>
+            <div class="preview-stub">
+              <svg class="silhouette" viewBox="0 0 200 240" aria-hidden="true">
+                <ellipse cx="100" cy="80" rx="46" ry="54" fill="rgba(255,248,231,.18)"/>
+                <path d="M40 240 Q40 150 100 150 Q160 150 160 240 Z" fill="rgba(255,248,231,.12)"/>
+              </svg>
+            </div>
+          </div>
+          <div class="shutter-row">
+            <button class="icon-btn"><span>↻</span>Flip</button>
+            <button class="shutter" aria-label="Take photo"></button>
+            <button class="icon-btn"><span>⤴</span>Upload</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>2 · Capture.</b> iPad-style camera frame with warm-light corner brackets so the kid knows where to put their face. Big pillowy shutter; "upload from photos" as a peer alternative.</div>
+  </div>
+
+  <!-- 3. ANIMEIFY -->
+  <div class="stage" data-phase="animeify">
+    <div class="ipad">
+      <div class="screen">
+        <div class="step-tag">3 / 7 · Anime-ify</div>
+        <div class="animeify">
+          <div class="stars"></div>
+          <div class="firefly f1"></div>
+          <div class="firefly f3"></div>
+          <div class="swirl">
+            <div class="swirl-ring r1"></div>
+            <div class="swirl-ring r2"></div>
+            <div class="swirl-ring r3"></div>
+            <div class="swirl-core"></div>
+          </div>
+          <h2>Sprinkling pixie dust…</h2>
+          <p class="copy">The lantern is drawing your anime face. This takes about six seconds.</p>
+          <div class="progress"><div class="progress-bar"></div></div>
+          <div class="step">Step 2 of 3 · Adding sparkly eyes</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>3 · Anime-ify loader.</b> Three concentric magic rings + glowing core. Copy is playful and time-bounded so the kid doesn't think it's broken.</div>
+  </div>
+
+  <!-- 4. REVEAL -->
+  <div class="stage" data-phase="reveal">
+    <div class="ipad">
+      <div class="screen">
+        <div class="step-tag">4 / 7 · Reveal</div>
+        <div class="reveal">
+          <div class="stars"></div>
+          <div class="firefly f1"></div>
+          <div class="firefly f2"></div>
+          <p class="reveal-banner">Ta-da!</p>
+          <h2>Meet anime-you</h2>
+          <div class="avatar-stage">
+            <div class="avatar-glow"></div>
+            <div class="avatar-disk">
+              <!-- chibi anime placeholder -->
+              <svg viewBox="0 0 240 240" width="100%" aria-hidden="true">
+                <ellipse cx="120" cy="100" rx="78" ry="84" fill="#3a2a1a"/>
+                <ellipse cx="120" cy="115" rx="64" ry="72" fill="#fde0c2"/>
+                <ellipse cx="98" cy="120" rx="6" ry="10" fill="#1a1d2e"/>
+                <ellipse cx="142" cy="120" rx="6" ry="10" fill="#1a1d2e"/>
+                <circle cx="100" cy="116" r="2" fill="#fff8e7"/>
+                <circle cx="144" cy="116" r="2" fill="#fff8e7"/>
+                <path d="M104 145 Q120 156 136 145" stroke="#1a1d2e" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <ellipse cx="86" cy="138" rx="6" ry="3" fill="#ff6b9d" opacity=".5"/>
+                <ellipse cx="154" cy="138" rx="6" ry="3" fill="#ff6b9d" opacity=".5"/>
+                <path d="M50 90 Q60 50 120 38 Q180 50 190 90 Q186 70 170 64 Q150 70 120 60 Q90 70 70 64 Q54 70 50 90 Z" fill="#3a2a1a"/>
+                <path d="M120 200 Q60 190 50 240 L190 240 Q180 190 120 200 Z" fill="#ff6b9d"/>
+              </svg>
+            </div>
+          </div>
+          <div class="name-tag"><em>player one</em>You!</div>
+          <div class="cta-row">
+            <button class="cta">Let's play! ✨</button>
+            <button class="cta ghost small">Add a friend?</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>4 · Reveal.</b> Anime avatar bursts onto a glowing disk, name-tag swings down, two CTAs offer the social branch (sibling co-op) without forcing it.</div>
+  </div>
+
+  <!-- 5. ROSTER + LEVEL SELECT -->
+  <div class="stage" data-phase="roster">
+    <div class="ipad">
+      <div class="screen">
+        <div class="step-tag">5 / 7 · Roster + Map</div>
+        <div class="roster">
+          <div class="topbar">
+            <button class="back">‹</button>
+            <h2>Pick a place</h2>
+            <div class="spacer"></div>
+          </div>
+          <div class="roster-strip">
+            <span class="roster-label">Lantern crew</span>
+            <div class="roster-chip">
+              <svg viewBox="0 0 54 54" width="54" height="54" aria-hidden="true">
+                <ellipse cx="27" cy="22" rx="16" ry="17" fill="#fde0c2"/>
+                <ellipse cx="22" cy="24" rx="1.4" ry="2" fill="#1a1d2e"/>
+                <ellipse cx="32" cy="24" rx="1.4" ry="2" fill="#1a1d2e"/>
+                <path d="M23 30 Q27 32 31 30" stroke="#1a1d2e" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                <path d="M11 18 Q14 6 27 4 Q40 6 43 18 Q40 12 27 11 Q14 12 11 18 Z" fill="#3a2a1a"/>
+              </svg>
+            </div>
+            <div class="roster-chip">
+              <svg viewBox="0 0 54 54" width="54" height="54" aria-hidden="true">
+                <ellipse cx="27" cy="22" rx="16" ry="17" fill="#fde0c2"/>
+                <ellipse cx="22" cy="24" rx="1.4" ry="2" fill="#1a1d2e"/>
+                <ellipse cx="32" cy="24" rx="1.4" ry="2" fill="#1a1d2e"/>
+                <path d="M23 30 Q27 33 31 30" stroke="#1a1d2e" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                <path d="M11 16 Q15 4 27 4 Q40 4 43 16 Q40 14 36 12 Q40 6 27 6 Q14 6 18 12 Q14 14 11 16 Z" fill="#ffd070"/>
+              </svg>
+            </div>
+            <div class="roster-chip add">+</div>
+          </div>
+          <div class="map">
+            <div class="stars"></div>
+            <span class="map-title">The night map</span>
+            <svg class="path" viewBox="0 0 400 700" preserveAspectRatio="none">
+              <path d="M120 130 Q220 220 200 360 Q180 500 280 580" stroke="rgba(255,208,112,.4)" stroke-width="3" stroke-dasharray="6 8" fill="none"/>
+            </svg>
+            <!-- Level 1 -->
+            <div class="level-pin" style="top:18%;left:30%">
+              <div class="pin-lantern lit">
+                <svg viewBox="0 0 64 64" width="40" height="40"><circle cx="32" cy="32" r="14" fill="#0a0d1f"/><path d="M22 22h20v20h-20z" fill="#fff4c8"/></svg>
+              </div>
+              <div class="lvl-name">Whispering Forest</div>
+              <div class="lvl-meta">★ 4/4</div>
+            </div>
+            <!-- Level 2 -->
+            <div class="level-pin" style="top:50%;left:50%">
+              <div class="pin-lantern lit">
+                <svg viewBox="0 0 64 64" width="40" height="40"><circle cx="32" cy="32" r="14" fill="#0a0d1f"/><path d="M22 22h20v20h-20z" fill="#ff6b9d"/></svg>
+              </div>
+              <div class="lvl-name">Meadow at Dusk</div>
+              <div class="lvl-meta">2/5 hidden</div>
+            </div>
+            <!-- Level 3 -->
+            <div class="level-pin locked" style="top:82%;left:70%">
+              <div class="pin-lantern dim">?</div>
+              <div class="lvl-name">Starlit Shore</div>
+              <div class="lvl-meta">locked</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>5 · Roster + Level select.</b> The new "Lantern crew" strip shows the kid's avatar(s) and a slot to add more. The night-map replaces the linear walk between levels with a real choice.</div>
+  </div>
+
+  <!-- 6. IN-LEVEL -->
+  <div class="stage" data-phase="level">
+    <div class="ipad">
+      <div class="screen">
+        <div class="step-tag">6 / 7 · In-level reveal</div>
+        <div class="level">
+          <div class="stars"></div>
+          <div class="leaves">
+            <i class="leaf-bit l1"></i>
+            <i class="leaf-bit l2"></i>
+            <i class="leaf-bit l3"></i>
+          </div>
+          <div class="firefly f1"></div>
+          <div class="firefly f2"></div>
+          <div class="firefly f3"></div>
+          <div class="signpost">Whispering Forest</div>
+          <div class="counter"><strong>3</strong>still hiding</div>
+          <!-- spotlight + reveal in-progress -->
+          <div class="spotlight"><div class="spotlight-glow"></div></div>
+          <div class="found-pop">
+            <svg viewBox="0 0 90 90" width="100%" aria-hidden="true">
+              <ellipse cx="45" cy="42" rx="30" ry="32" fill="#fde0c2"/>
+              <ellipse cx="36" cy="46" rx="2.6" ry="3.4" fill="#1a1d2e"/>
+              <ellipse cx="54" cy="46" rx="2.6" ry="3.4" fill="#1a1d2e"/>
+              <path d="M38 56 Q45 60 52 56" stroke="#1a1d2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M16 36 Q22 14 45 12 Q68 14 74 36 Q68 28 56 26 Q45 30 34 26 Q22 28 16 36 Z" fill="#3a2a1a"/>
+            </svg>
+          </div>
+          <div class="swing-tag">
+            <div class="tag"><em>that's</em>You!</div>
+          </div>
+          <div class="toast">
+            <div class="mini-avatar"></div>
+            You found yourself!
+          </div>
+          <div class="tray">
+            <div class="tray-slot found you">U</div>
+            <div class="tray-slot found">L</div>
+            <div class="tray-slot unfound green">?</div>
+            <div class="tray-slot unfound purple">?</div>
+            <div class="tray-slot unfound pink">?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>6 · In-level.</b> Spotlight uncovers the kid's anime avatar peeking out. Swing-down name tag arrives after a short delay so face reads first. Trophy tray shows you-found-you plus coloured silhouettes for what's still hiding.</div>
+  </div>
+
+  <!-- 7. COMPLETE -->
+  <div class="stage" data-phase="complete">
+    <div class="ipad">
+      <div class="screen">
+        <div class="step-tag">7 / 7 · Complete</div>
+        <div class="complete">
+          <div class="confetti">
+            <i style="left:10%;background:var(--leaf);animation-delay:0s"></i>
+            <i style="left:25%;background:var(--accent);animation-delay:.4s;border-radius:50%"></i>
+            <i style="left:40%;background:var(--warm);animation-delay:.9s"></i>
+            <i style="left:55%;background:var(--sky);animation-delay:1.4s;border-radius:50%"></i>
+            <i style="left:70%;background:var(--accent);animation-delay:.2s"></i>
+            <i style="left:85%;background:var(--leaf);animation-delay:1.8s;border-radius:50%"></i>
+            <i style="left:18%;background:var(--warm);animation-delay:2.2s"></i>
+            <i style="left:62%;background:var(--accent);animation-delay:2.6s;border-radius:50%"></i>
+          </div>
+          <h2>You found everyone!</h2>
+          <div class="ribbon">Whispering Forest · 1m 42s</div>
+          <div class="stage-plank">
+            <div class="lineup">
+              <div class="lineup-card"><div class="lineup-disk you"></div><div class="lineup-name you">You</div></div>
+              <div class="lineup-card"><div class="lineup-disk green"></div><div class="lineup-name">Leafu</div></div>
+              <div class="lineup-card"><div class="lineup-disk purple"></div><div class="lineup-name">Shroomi</div></div>
+              <div class="lineup-card"><div class="lineup-disk pink"></div><div class="lineup-name">Puffi</div></div>
+              <div class="lineup-card"><div class="lineup-disk"></div><div class="lineup-name">Roxxo</div></div>
+            </div>
+          </div>
+          <div class="cta-row">
+            <button class="cta">Next adventure →</button>
+            <button class="cta ghost small">Play again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>7 · Complete.</b> Confetti in level palette, ribbon for level + time, "stage plank" lineup with the kid's avatar on the far left in accent pink. No emoji 🎉 — bespoke celebration only.</div>
+  </div>
+
+</main>
+
+<!-- ═══════════ SOLO STAGE (single iPad, click-through) ═══════════ -->
+<div class="solo-stage">
+  <div class="ipad">
+    <div class="screen" id="solo-screen">
+      <!-- populated by JS -->
+    </div>
+  </div>
+  <div class="caption" id="solo-caption"></div>
+</div>
+
+<!-- ═══════════ CONTROLS ═══════════ -->
+<nav class="controls">
+  <span class="ctl-label">View</span>
+  <button id="mode-grid" class="active">All 7</button>
+  <button id="mode-solo">Click-through</button>
+  <span style="width:1px;height:18px;background:rgba(255,248,231,.1);margin:0 4px"></span>
+  <button id="prev">‹ Prev</button>
+  <button id="next">Next ›</button>
+</nav>
+
+<script>
+  const phases = ['splash','capture','animeify','reveal','roster','level','complete'];
+  let idx = 0;
+  let mode = 'grid';
+
+  const stages = Array.from(document.querySelectorAll('.stage-grid .stage'));
+  const soloScreen = document.getElementById('solo-screen');
+  const soloCaption = document.getElementById('solo-caption');
+
+  function setMode(m){
+    mode = m;
+    document.body.classList.toggle('solo', m === 'solo');
+    document.getElementById('mode-grid').classList.toggle('active', m === 'grid');
+    document.getElementById('mode-solo').classList.toggle('active', m === 'solo');
+    if (m === 'solo') render();
+  }
+
+  function render(){
+    const phase = phases[idx];
+    const src = stages.find(s => s.dataset.phase === phase);
+    if (!src) return;
+    const screen = src.querySelector('.screen').cloneNode(true);
+    soloScreen.replaceWith(screen);
+    screen.id = 'solo-screen';
+    soloCaption.textContent = '';
+    const cap = src.querySelector('.caption').cloneNode(true);
+    soloCaption.replaceChildren(...cap.childNodes);
+  }
+
+  function step(d){
+    if (mode === 'grid') setMode('solo');
+    idx = (idx + d + phases.length) % phases.length;
+    render();
+  }
+
+  document.getElementById('mode-grid').addEventListener('click', () => setMode('grid'));
+  document.getElementById('mode-solo').addEventListener('click', () => setMode('solo'));
+  document.getElementById('next').addEventListener('click', () => step(1));
+  document.getElementById('prev').addEventListener('click', () => step(-1));
+
+  // click any stage in grid to jump into solo at that phase
+  stages.forEach((s, i) => {
+    s.addEventListener('click', () => {
+      idx = phases.indexOf(s.dataset.phase);
+      setMode('solo');
+    });
+    s.style.cursor = 'pointer';
+  });
+
+  // tap inside a solo screen → advance
+  document.body.addEventListener('click', (e) => {
+    if (mode !== 'solo') return;
+    if (e.target.closest('.controls')) return;
+    if (e.target.closest('.solo-stage .screen')) step(1);
+  });
+
+  // keyboard nav
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') step(1);
+    if (e.key === 'ArrowLeft') step(-1);
+  });
+</script>
+
+</body>
+</html>

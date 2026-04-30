@@ -330,6 +330,7 @@ async function main() {
 <nav class="toc">
   <a href="#summary">Summary</a>
   ${SCENE_ORDER.map((s, i) => `<a href="#${s}">${String(i + 1).padStart(2, '0')} · ${SCENE_TITLES[s]}</a>`).join('')}
+  <a href="#v1-roadmap" style="color: var(--leaf);">→ v1 roadmap</a>
 </nav>
 
 <main>
@@ -368,11 +369,41 @@ async function main() {
 
   ${sceneSections}
 
+  <section class="summary" id="v1-roadmap" style="border-top: 1px solid var(--rule);">
+    <h2>What's coming in v1</h2>
+    <p style="color: rgba(255, 248, 231, 0.7); margin: 0 0 28px; max-width: 900px; line-height: 1.55;">
+      v0 ships hand-painted SVG scenes. v1 swaps those for AI-generated backgrounds (already wired —
+      see this report's scene screenshots) and adds the headline feature: <strong>"find yourself"</strong>.
+      Kids upload a photo, the app converts it to an anime avatar via Higgsfield, and they play the
+      existing levels finding themselves and friends hiding alongside the pocket creatures.
+    </p>
+    <div class="stat-grid">
+      <div class="stat"><div class="num">3</div><div class="lbl">AI-generated scene backgrounds (Flux 2.0, shipped)</div></div>
+      <div class="stat"><div class="num">2</div><div class="lbl">v1 design docs landed (UX critique + character prompt)</div></div>
+      <div class="stat"><div class="num">7</div><div class="lbl">v1 user-flow phases prototyped in clickable HTML</div></div>
+      <div class="stat"><div class="num">4</div><div class="lbl">Image-gen models bench-tested → flux_2 + nano_banana_2 selected</div></div>
+    </div>
+    <table class="feat-table">
+      <thead><tr><th style="width: 35%">v1 deliverable</th><th>Status</th><th>Doc</th></tr></thead>
+      <tbody>
+        <tr><td>AI scene backgrounds (Higgsfield Flux 2.0)</td><td><span class="pill shipped">Shipped</span></td><td><a href="../public/scenes/" style="color: var(--edge);">public/scenes/</a></td></tr>
+        <tr><td>Image-gen model comparison + decision</td><td><span class="pill shipped">Shipped</span></td><td><a href="../docs/model-comparison.html" style="color: var(--edge);">docs/model-comparison.html</a></td></tr>
+        <tr><td>v1 UI/UX critique + improvement plan</td><td><span class="pill shipped">Shipped</span></td><td><a href="../docs/v1-ui-ux-proposal.md" style="color: var(--edge);">v1-ui-ux-proposal.md</a></td></tr>
+        <tr><td>Character anime conversion — prompt + integration plan</td><td><span class="pill shipped">Shipped</span></td><td><a href="../docs/v1-character-prompt.md" style="color: var(--edge);">v1-character-prompt.md</a></td></tr>
+        <tr><td>v1 clickable mockup (7-phase character flow prototype)</td><td><span class="pill shipped">Shipped</span></td><td><a href="../docs/v1-mockup.html" style="color: var(--edge);">docs/v1-mockup.html</a></td></tr>
+        <tr><td>Higgsfield MCP integration + auth refresh script</td><td><span class="pill shipped">Shipped</span></td><td><a href="../docs/higgsfield-mcp.md" style="color: var(--edge);">higgsfield-mcp.md</a></td></tr>
+        <tr><td>Backend proxy for character upload + media moderation</td><td><span class="pill stub">v1 — backend pending</span></td><td>—</td></tr>
+        <tr><td>Parent gate / COPPA flow (avatar moderation, photo deletion)</td><td><span class="pill stub">v1 — backend pending</span></td><td>—</td></tr>
+        <tr><td>Level-select map with avatar progression</td><td><span class="pill stub">v1 — proposed in mockup</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
 </main>
 
 <footer>
-  <span>Pokemon Searchlight Edition · v0 review</span>
-  <span>${manifest.length} screenshots · 3 viewports · captured via headless chromium</span>
+  <span>Pokemon Searchlight Edition · v0 review (with v1 roadmap)</span>
+  <span>${manifest.length} screenshots · 3 viewports · captured via headless chromium · ${new Date().toISOString().slice(0, 10)}</span>
 </footer>
 
 </body>

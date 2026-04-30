@@ -26,6 +26,18 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
   })
 }
 
+// happy-dom's Image() never decodes anything (no real pixels), so its
+// onload handler never fires. The new sceneLoader awaits onload; stub it
+// to fire on the next microtask so unit tests don't time out.
+class FakeImage {
+  set src(_v: string) {
+    queueMicrotask(() => this.onload?.())
+  }
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+}
+;(globalThis as unknown as { Image: typeof FakeImage }).Image = FakeImage
+
 // Stub Web Audio so sound module imports don't blow up under happy-dom.
 ;(globalThis as unknown as { AudioContext: unknown }).AudioContext = class {
   state = 'running'

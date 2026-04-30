@@ -38,3 +38,10 @@ report/*.pdf
 .env.local
 scratch/
 
+
+# Model comparison doc — bundles 4×2.5 MB inlined PNGs (28 MB total).
+# Regenerate with: npx tsx scripts/build-model-comparison.ts
+docs/model-comparison.html
+
+# Scene verification screenshots — auto-regenerable via scratch/verify-scenes.ts
+docs/v1-scene-verify/
