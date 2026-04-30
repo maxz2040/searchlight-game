@@ -73,8 +73,17 @@ async function gotoFresh(page: Page, levelId?: string) {
       handle.store.getState().selectLevel(id)
     }, levelId)
   } else {
-    // Wait out the loader.
-    await page.waitForSelector('button:has-text("Let\'s go")', { timeout: 5000 })
+    // Drive directly through the store rather than waiting on the loader's
+    // animated transition. Force phase=tutorial then wait for the rendered
+    // Tutorial heading (which has a stable role + accessible name).
+    await page.evaluate(() => {
+      const h = (window as unknown as { __searchlight: { store: { getState(): { start(): void; phase: string } } } }).__searchlight
+      const s = h.store.getState()
+      if (s.phase === 'loading') s.start()
+    })
+    // Wait on the Tutorial heading; it's set by Tutorial.tsx as <motion.h1>
+    // and reliably appears once phase=tutorial regardless of CTA wording.
+    await page.getByRole('heading', { name: /find the hidden friends/i }).waitFor({ timeout: 15000 })
   }
 }
 
