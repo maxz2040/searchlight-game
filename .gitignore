@@ -32,3 +32,9 @@ playwright-report/
 report/screenshots/
 report/index.html
 report/*.pdf
+
+# Local secrets — never commit
+.env
+.env.local
+scratch/
+
