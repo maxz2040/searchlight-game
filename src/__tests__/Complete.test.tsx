@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { Complete } from '../components/Complete'
 import { useGame } from '../store/gameStore'
 import { LEVELS } from '../levels/levels'

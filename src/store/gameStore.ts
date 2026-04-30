@@ -55,7 +55,16 @@ export const useGame = create<GameState>((set, get) => ({
     set({ phase: 'tutorial' });
   },
   beginPlaying() {
-    set({ phase: 'playing', startedAt: Date.now(), completedAt: null });
+    const { levelId } = get();
+    const level = getLevel(levelId);
+    const now = Date.now();
+    // Degenerate level (no creatures) — auto-complete instead of leaving
+    // the kid stranded on an empty scene with a "0 / 0 found" pill.
+    if (level && level.creatures.length === 0) {
+      set({ phase: 'complete', startedAt: now, completedAt: now });
+      return;
+    }
+    set({ phase: 'playing', startedAt: now, completedAt: null });
   },
   markFound(creatureId: string) {
     const { found, levelId } = get();

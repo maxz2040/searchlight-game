@@ -48,6 +48,11 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
   foundRef.current = found;
   onRevealRef.current = onReveal;
 
+  // Has the player actually moved a finger / mouse onto the surface yet?
+  // The dwell timer only runs once this flips true — see comment in the
+  // collision tick below.
+  const pointerInteractedRef = useRef(false);
+
   // Compute spotlight radius in CSS pixels from the surface size.
   const radiusPx = useMotionValue(120);
 
@@ -124,6 +129,16 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
         return;
       }
 
+      // v2 UAT fix (auto-mark on spawn): the spotlight is initialised at the
+      // surface centre so the player sees a lantern before the first touch.
+      // But if a creature's bbox covers that centre, the dwell timer fires
+      // 700 ms later and the level "self-plays" before the kid does anything.
+      // Gate collision on at least one real pointer interaction.
+      if (!pointerInteractedRef.current) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
       const now = performance.now();
       const list = creaturesRef.current;
       const seen = foundRef.current;
@@ -157,6 +172,7 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
     const rect = el.getBoundingClientRect();
     x.set(e.clientX - rect.left);
     y.set(e.clientY - rect.top);
+    pointerInteractedRef.current = true;
   }
 
   // Initial position: centre, so the player sees something on first

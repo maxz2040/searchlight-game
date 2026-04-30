@@ -89,7 +89,11 @@ export function Scene() {
             for E2E. */}
         {level.creatures.map((c) => {
           const isFound = found.has(c.id);
-          const isHinted = hintFor === c.id && !isFound;
+          // hintFor would normally drive an animated glow; v1 UAT removed
+          // anchored visual markers entirely (bbox imprecision made them
+          // feel like wrong-place ovals). Hint now lives in the
+          // TargetVignette chip pulse only.
+          void hintFor;
           return (
             <div
               key={c.id}
@@ -104,17 +108,12 @@ export function Scene() {
               data-testid={`creature-${c.id}`}
               data-found={isFound ? 'true' : 'false'}
             >
-              {/* Subtle on-find sparkle ring — anchored to the (imperfect)
-                  detected bbox. Soft enough that even when the bbox is off
-                  by ~30%, it just feels like ambient celebration rather
-                  than a wrong-place marker. */}
-              {isFound && (
-                <div className="absolute inset-0 rounded-full ring-2 ring-spotlight-warm/40 animate-reveal-pop" />
-              )}
-              {/* Idle-hint glow nudges the kid toward the next unfound area. */}
-              {isHinted && (
-                <div className="absolute inset-0 rounded-full bg-spotlight-warm/40 blur-2xl animate-hint-pulse" />
-              )}
+              {/* No visible marker on the painted creature itself — the
+                  bbox detection is ~70-80% accurate so any anchored ring
+                  reads as a wrong-place oval per UAT. Reveal feedback now
+                  lives entirely in: the spotlight beam (it brightens the
+                  area where the kid found something), the ProgressPill
+                  count tick, the ping sound, and haptic vibration. */}
             </div>
           );
         })}
