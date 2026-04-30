@@ -24,6 +24,11 @@ interface Props {
   creatures: Creature[];
   /** Set of already-found creature ids — never trigger again. */
   found: Set<string>;
+  /** ID of the ONE creature the player is currently hunting (shown in the
+   *  Find-this vignette). Collision only fires on this creature; panning
+   *  through the spotlight near other unfound creatures must NOT mark them.
+   *  When undefined, no collision is checked (e.g. between targets). */
+  activeId?: string;
   /** Called once when the spotlight first overlaps a creature. */
   onReveal: (creatureId: string) => void;
   /** Children (the dark layer below the spotlight, e.g. nothing — the
@@ -31,7 +36,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export function Spotlight({ radiusFraction, creatures, found, onReveal, children }: Props) {
+export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal, children }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -43,9 +48,11 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
   // Stable refs for collision-loop access without re-renders.
   const creaturesRef = useRef(creatures);
   const foundRef = useRef(found);
+  const activeIdRef = useRef(activeId);
   const onRevealRef = useRef(onReveal);
   creaturesRef.current = creatures;
   foundRef.current = found;
+  activeIdRef.current = activeId;
   onRevealRef.current = onReveal;
 
   // Has the player actually moved a finger / mouse onto the surface yet?
@@ -140,10 +147,15 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
       }
 
       const now = performance.now();
-      const list = creaturesRef.current;
       const seen = foundRef.current;
-      for (const c of list) {
-        if (seen.has(c.id)) continue;
+      const target = activeIdRef.current;
+      // ONLY check the active target. Panning through other unfound
+      // creatures must NOT mark them. If there's no active target, the
+      // game is between states (e.g. all found) — skip collision.
+      const c = target && !seen.has(target)
+        ? creaturesRef.current.find((cr) => cr.id === target)
+        : undefined;
+      if (c) {
         const rect = creatureRect(c, W, H);
         const overlapping = circleHitsRect({ cx, cy, r }, rect);
         if (overlapping) {
@@ -153,7 +165,6 @@ export function Spotlight({ radiusFraction, creatures, found, onReveal, children
             overlapStart[c.id] = undefined;
           }
         } else {
-          // Spotlight left the bbox — reset the dwell timer.
           overlapStart[c.id] = undefined;
         }
       }

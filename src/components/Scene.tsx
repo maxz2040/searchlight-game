@@ -65,6 +65,11 @@ export function Scene() {
 
   const total = level.creatures.length;
   const foundCount = total - remaining;
+  // Active target = the creature shown in the Find-this vignette =
+  // the FIRST unfound creature in level order. Spotlight collision is
+  // gated on this id so panning past other unfound creatures does NOT
+  // accidentally mark them.
+  const activeTarget = level.creatures.find((c) => !found.has(c.id));
 
   return (
     <div
@@ -77,6 +82,7 @@ export function Scene() {
         radiusFraction={level.spotlight}
         creatures={level.creatures}
         found={found}
+        activeId={activeTarget?.id}
         onReveal={onReveal}
       >
         <SceneBackground scene={level.scene} />
