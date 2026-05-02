@@ -284,20 +284,17 @@ test.describe('Dwell timing', () => {
   })
 })
 
-// ── Hitbox expansion ──────────────────────────────────────────────────────────
+// ── Exact hitbox detection ────────────────────────────────────────────────────
+// The spotlight uses the raw creature bbox with no expansion. Kids must aim
+// the spotlight directly at the creature.
 
-test.describe('Hitbox expansion (25 % generous bbox)', () => {
-  test('spotlight positioned just outside the raw bbox but within expansion zone triggers dwell', async ({ page }) => {
-    // Inject a creature with a known small bbox at a known position.
-    // Place the spotlight slightly beyond the raw edge (1.1× half-width) but
-    // inside the 1.25× expanded edge. With a tiny spotlight radius the only
-    // reason this hits is the hitbox expansion.
+test.describe('Exact hitbox detection', () => {
+  test('spotlight centred on creature centre registers after full dwell', async ({ page }) => {
     await gotoFresh(page)
     await page.evaluate(() => {
       const h = (window as unknown as { __searchlight: { levels: Level[] } }).__searchlight
       h.levels[0].creatures = [
-        // Centre (0.5, 0.5), small bbox w=h=0.04 (4 % of surface each axis).
-        { id: 'small', kind: 'leaf-pup', x: 0.5, y: 0.5, w: 0.04, h: 0.04, name: 'Tiny' },
+        { id: 'exact', kind: 'leaf-pup', x: 0.5, y: 0.5, w: 0.12, h: 0.12, name: 'Target' },
       ]
     })
     await page.evaluate(() =>
@@ -306,24 +303,22 @@ test.describe('Hitbox expansion (25 % generous bbox)', () => {
       }).__searchlight.store.getState().selectLevel('lvl-1'),
     )
     await startPlaying(page)
-
-    // Position spotlight at 1.12× the raw half-width offset from centre.
-    // raw half-width  = 0.04/2 = 0.02  → raw edge at 0.52
-    // expanded edge   = 0.02 * 1.25 = 0.025 → 0.525
-    // test point      = 0.522  (outside raw 0.520, inside expanded 0.525)
-    await moveTo(page, 0.522, 0.5)
-    await expect(page.getByTestId('creature-small')).toHaveAttribute(
+    await moveTo(page, 0.5, 0.5)
+    await expect(page.getByTestId('creature-exact')).toHaveAttribute(
       'data-found', 'true', { timeout: 5_000 },
     )
   })
 
-  test('spotlight clearly outside both raw and expanded bbox does NOT trigger', async ({ page }) => {
+  test('spotlight clearly outside the raw bbox does NOT trigger', async ({ page }) => {
+    // Inject a small creature and a very tiny spotlight so the only way to
+    // register is to be directly over the bbox (no radius bridge, no expansion).
     await gotoFresh(page)
     await page.evaluate(() => {
       const h = (window as unknown as { __searchlight: { levels: Level[] } }).__searchlight
       h.levels[0].creatures = [
-        { id: 'small', kind: 'leaf-pup', x: 0.5, y: 0.5, w: 0.04, h: 0.04, name: 'Tiny' },
+        { id: 'exact', kind: 'leaf-pup', x: 0.5, y: 0.5, w: 0.06, h: 0.06, name: 'Target' },
       ]
+      h.levels[0].spotlight = 0.01  // tiny radius so it can't bridge the gap
     })
     await page.evaluate(() =>
       (window as unknown as {
@@ -332,14 +327,9 @@ test.describe('Hitbox expansion (25 % generous bbox)', () => {
     )
     await startPlaying(page)
 
-    // expanded edge = 0.525; test point = 0.54 → clearly outside.
-    // Spotlight radius is ~0.15*min(W,H) in px but we use a very tiny
-    // spotlight by injecting spotlight=0.01 — too small to bridge the gap.
-    await page.evaluate(() => {
-      (window as unknown as { __searchlight: { levels: Level[] } })
-        .__searchlight.levels[0].spotlight = 0.01
-    })
-    await moveTo(page, 0.54, 0.5)
+    // Place spotlight well outside the bbox (half-width = 0.03, so edge at 0.53;
+    // test point 0.57 is clearly outside even the largest spotlight radius).
+    await moveTo(page, 0.57, 0.5)
     await page.waitForTimeout(1200)
     expect(await getFound(page)).toEqual([])
   })

@@ -16,10 +16,6 @@
 // prioritised when multiple bboxes overlap the spotlight so that the
 // guided hint system remains consistent.
 //
-// Hitbox expansion: creature bboxes are inflated by HIT_EXPANSION (25%)
-// at runtime so the hit zone is visually generous; this makes the game
-// feel more responsive for young players without changing the visual.
-//
 // iPad Safari hardening:
 //   * setPointerCapture on pointerdown — tracking survives finger drift
 //     past the element boundary.
@@ -51,7 +47,6 @@ const CIRCUMFERENCE = 2 * Math.PI * RING_R; // ≈ 226.2
 // Mechanic constants.
 const DWELL_MS         = 900;   // ms to hold still before a creature registers
 const FIND_COOLDOWN_MS = 500;   // ms grace period after a find before next dwell starts
-const HIT_EXPANSION    = 1.25;  // inflate creature bboxes by 25 % for generous registration
 
 export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal, children }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -188,7 +183,7 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
       // Find the first overlapping creature.
       let hit: Creature | undefined;
       for (const c of ordered) {
-        if (circleHitsRect({ cx, cy, r }, creatureRect(c, W, H, HIT_EXPANSION))) {
+        if (circleHitsRect({ cx, cy, r }, creatureRect(c, W, H))) {
           hit = c;
           break;
         }

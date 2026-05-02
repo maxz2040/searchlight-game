@@ -364,12 +364,10 @@ test.describe('v2 negative — UI / state machine', () => {
     const level = await getLevel(page);
     // Pick an empty area: top-left corner is empty for lvl-1.
     const empty = { x: 0.02, y: 0.05 };
-    // Make sure no creature bbox (even with 1.25× expansion) covers the empty point.
+    // Make sure no creature raw bbox covers the empty point.
     for (const c of level.creatures) {
-      const halfW = (c.w / 2) * 1.25;
-      const halfH = (c.h / 2) * 1.25;
-      const inX = empty.x > c.x - halfW && empty.x < c.x + halfW;
-      const inY = empty.y > c.y - halfH && empty.y < c.y + halfH;
+      const inX = empty.x > c.x - c.w / 2 && empty.x < c.x + c.w / 2;
+      const inY = empty.y > c.y - c.h / 2 && empty.y < c.y + c.h / 2;
       expect(inX && inY).toBe(false);
     }
     const box = await surfaceBox(page);
