@@ -400,7 +400,7 @@ function RemainingTray({
               className={`relative h-14 w-14 overflow-hidden rounded-2xl transition-[background-color,box-shadow] duration-[260ms] ${
                 isFound
                   ? 'surface-card shadow-md ring-2 ring-spotlight-edge'
-                  : 'bg-[oklch(11%_0.03_275/0.85)] ring-2 ring-[oklch(96%_0.018_80/0.22)]'
+                  : 'bg-[rgba(12,14,26,0.85)] ring-2 ring-[rgba(245,238,222,0.22)]'
               }`}
               aria-label={isFound ? c.name : 'hidden'}
               title={isFound ? c.name : 'hidden'}

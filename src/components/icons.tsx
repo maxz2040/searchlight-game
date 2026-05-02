@@ -4,25 +4,30 @@
 // resolve them. Keeping them as React components means the components
 // can colour them from CSS variables.
 //
-// All icons use currentColor for stroke/fill so a parent `text-paper` (or
-// any tailwind text-* class) controls the colour.
+// iPad Safari note: SVG fill/stroke attributes in JSX do NOT go through
+// PostCSS or Lightning CSS, so oklch() literals inside JS strings are NOT
+// autoprefixed. All colours here use sRGB hex equivalents so they render
+// correctly on Safari < 15.4 (which doesn't support oklch()). The hex
+// values are computed from the design-system OKLCH primitives:
+//   oklch(96% 0.04  82) → #f8eedd   (spotlight-warm / lantern-100)
+//   oklch(92% 0.07  80) → #ead9a8   (lantern-200)
+//   oklch(88% 0.10  76) → #e0c87a   (lantern-300)
+//   oklch(82% 0.16  72) → #d4a73c   (spotlight-edge / lantern-500)
+//   oklch(64% 0.16  58) → #a07828   (accent / lantern-700)
 
 import type { SVGProps } from 'react';
 
 type Props = SVGProps<SVGSVGElement>;
 
-/** Glowing lantern — used in the loader and the tutorial entry. */
 export function LanternIcon(props: Props) {
   return (
     <svg viewBox="0 0 48 48" fill="none" {...props}>
-      {/* handle */}
       <path
         d="M19 8h10"
         stroke="currentColor"
         strokeWidth="2.5"
         strokeLinecap="round"
       />
-      {/* top cap */}
       <rect
         x="16"
         y="9"
@@ -32,7 +37,6 @@ export function LanternIcon(props: Props) {
         fill="currentColor"
         opacity="0.85"
       />
-      {/* body */}
       <path
         d="M14 17 L34 17 L32 38 L16 38 Z"
         fill="currentColor"
@@ -41,12 +45,10 @@ export function LanternIcon(props: Props) {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      {/* flame */}
       <path
         d="M24 21c-3 2-4 4-4 6.5C20 30.5 22 32 24 32s4-1.5 4-4.5c0-2.5-1-4.5-4-6.5Z"
         fill="currentColor"
       />
-      {/* base */}
       <rect
         x="14"
         y="38"
@@ -60,7 +62,6 @@ export function LanternIcon(props: Props) {
   );
 }
 
-/** 4-pointed sparkle. Used wherever a celebratory accent was needed. */
 export function SparkleIcon(props: Props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
@@ -74,7 +75,6 @@ export function SparkleIcon(props: Props) {
   );
 }
 
-/** Right-pointing chevron — replaces the "→" in the Next-level CTA. */
 export function ArrowRightIcon(props: Props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
@@ -89,7 +89,6 @@ export function ArrowRightIcon(props: Props) {
   );
 }
 
-/** Solid play triangle — replaces the "▶" in the skip button. */
 export function PlayIcon(props: Props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
@@ -104,32 +103,27 @@ export function PlayIcon(props: Props) {
   );
 }
 
-/** Lantern bloom — used as the celebration crown on Complete card.
- *  v3 (impeccable) re-tone: every fill/stroke is in the SAME warm hue
- *  family (paper / lantern-100 / lantern-500 / brass), no rainbow
- *  primaries. The shape brief picks Restrained — one brand hue, neutrals
- *  tinted toward it. The bloom reads as "the lantern just flared with
- *  oil" instead of "party confetti" (which fights the bedtime scene).
- *  Fills use OKLCH literals matching the index.css primitives.
+/**
+ * Lantern bloom — celebration crown on Complete card.
+ * All colours are sRGB hex (computed from the OKLCH design tokens above)
+ * so they render correctly on Safari < 15.4 where oklch() is unsupported
+ * in SVG fill attributes.
  */
 export function ConfettiIcon(props: Props) {
-  // Hue family: oklch(... 70-82) — tungsten amber.
-  const c100 = 'oklch(96% 0.04 82)';     // soft glow
-  const c300 = 'oklch(88% 0.10 76)';     // mid warm
-  const c500 = 'oklch(82% 0.16 72)';     // flame edge (brand)
-  const c700 = 'oklch(64% 0.16 58)';     // brass accent
-  const c200 = 'oklch(92% 0.07 80)';     // pale halo
+  // sRGB hex equivalents of the OKLCH design-system primitives.
+  const c100 = '#f8eedd';  // lantern-100 / spotlight-warm
+  const c200 = '#ead9a8';  // lantern-200
+  const c300 = '#e0c87a';  // lantern-300
+  const c500 = '#d4a73c';  // lantern-500 / spotlight-edge
+  const c700 = '#a07828';  // lantern-700 / accent
   return (
     <svg viewBox="0 0 64 64" fill="none" {...props}>
-      {/* Lantern light radiating outward — concentric warm discs. */}
       <circle cx="32" cy="32" r="14" fill={c100} />
-      <circle cx="32" cy="32" r="9" fill={c500} />
-      {/* Four warm rays — same hue family, varying lightness. */}
+      <circle cx="32" cy="32" r="9"  fill={c500} />
       <path d="M32 32 L 12 8"  stroke={c700} strokeWidth="3.5" strokeLinecap="round" />
       <path d="M32 32 L 56 12" stroke={c500} strokeWidth="3.5" strokeLinecap="round" />
       <path d="M32 32 L 8 36"  stroke={c300} strokeWidth="3.5" strokeLinecap="round" />
       <path d="M32 32 L 58 50" stroke={c700} strokeWidth="3.5" strokeLinecap="round" />
-      {/* Spark dots — also in-family, lightness-stepped. */}
       <circle cx="11" cy="11" r="2.5" fill={c700} />
       <circle cx="55" cy="14" r="2.2" fill={c500} />
       <circle cx="9"  cy="38" r="2.2" fill={c200} />

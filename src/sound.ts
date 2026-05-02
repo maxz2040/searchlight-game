@@ -1,7 +1,11 @@
 // Tiny sound module. Generates a friendly "ping" via Web Audio API
 // rather than shipping audio files — keeps the bundle small and the
-// app fully offline-capable. Future: replace with curated WebM/AAC
-// samples when we wire AI-generated scenes (PRD §Backend).
+// app fully offline-capable.
+//
+// iOS Safari note: AudioContext must be created AND resumed inside a
+// synchronous user-gesture handler (click/touchstart). We expose
+// unlockAudio() which should be called from the Tutorial "Let's begin"
+// button click so that later playPing() calls from the rAF loop succeed.
 
 let ctx: AudioContext | null = null;
 
@@ -17,11 +21,27 @@ function ensureCtx(): AudioContext | null {
   return ctx;
 }
 
+/**
+ * Pre-unlock the AudioContext on the first user gesture.
+ * Must be called synchronously inside a click / touchstart / pointerdown
+ * handler so iOS Safari grants permission to start audio.
+ * Safe to call multiple times.
+ */
+export function unlockAudio(): void {
+  const a = ensureCtx();
+  if (!a) return;
+  // iOS Safari requires resume() called synchronously inside a user gesture.
+  if (a.state === 'suspended') {
+    a.resume().catch(() => {});
+  }
+}
+
 /** Short ascending two-tone "you found one" chime. */
 export function playPing() {
   const a = ensureCtx();
   if (!a) return;
-  // Resume on first user interaction (Safari iOS requirement).
+  // Belt-and-suspenders resume in case the context was auto-suspended
+  // after a period of silence (Safari will do this).
   if (a.state === 'suspended') a.resume().catch(() => {});
 
   const ctxLocal: AudioContext = a;
@@ -50,8 +70,6 @@ export function playFanfare() {
   if (!a) return;
   if (a.state === 'suspended') a.resume().catch(() => {});
 
-  // Capture in a non-null local so TS narrowing holds across the
-  // nested `chord` closure boundary.
   const ctxLocal: AudioContext = a;
   const now = ctxLocal.currentTime;
   function chord(freqs: number[], t0: number, dur: number, gain = 0.12) {

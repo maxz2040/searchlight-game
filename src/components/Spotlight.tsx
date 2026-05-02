@@ -5,11 +5,17 @@
 //   * Radial gradient mask: inner transparent, outer near-black.
 //   * Touch-first: pointer events handle mouse + touch + pen uniformly.
 //
-// Collision detection runs in a rAF loop driven by the live motion
-// values (NOT the React state) so we never miss a frame at 60Hz on
-// iPad. The collision callback receives normalized (0..1) coordinates
-// + spotlight radius in pixels so the parent can compute creature
-// overlaps in scene-relative space.
+// iPad Safari hardening (v3):
+//   * setPointerCapture on pointerdown — ensures tracking continues even
+//     if the finger slides past the element boundary (common on edge-to-
+//     edge iPad play). Without this, touchmove outside the div drops
+//     the pointer and the lantern freezes mid-swipe.
+//   * gesturestart / gesturechange / gestureend preventDefault — Apple's
+//     proprietary multi-touch gesture events. Prevents pinch-zoom from
+//     hijacking two-finger input during gameplay even on older iOS where
+//     the viewport meta tag is not fully respected.
+//   * pointercancel handler — releases capture cleanly on iOS interrupt
+//     (incoming call, home button, Control Centre swipe).
 
 import { useEffect, useMemo, useRef } from 'react';
 import { motion, useMotionValue, useMotionValueEvent } from 'framer-motion';
@@ -17,22 +23,11 @@ import type { Creature } from '../levels/levels';
 import { circleHitsRect, creatureRect } from '../collision';
 
 interface Props {
-  /** Spotlight radius as a fraction of min(width, height). PRD says 0.14–0.18. */
   radiusFraction: number;
-  /** All creatures the spotlight may reveal. We pass the live list so newly-
-   *  found creatures stop being checked. */
   creatures: Creature[];
-  /** Set of already-found creature ids — never trigger again. */
   found: Set<string>;
-  /** ID of the ONE creature the player is currently hunting (shown in the
-   *  Find-this vignette). Collision only fires on this creature; panning
-   *  through the spotlight near other unfound creatures must NOT mark them.
-   *  When undefined, no collision is checked (e.g. between targets). */
   activeId?: string;
-  /** Called once when the spotlight first overlaps a creature. */
   onReveal: (creatureId: string) => void;
-  /** Children (the dark layer below the spotlight, e.g. nothing — the
-   *  radial gradient itself IS the darkness). Optional. */
   children?: React.ReactNode;
 }
 
@@ -40,12 +35,9 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
   const surfaceRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Pointer position in surface-relative pixels. Live motion values =
-  // no React re-render on move. We only re-render when collision fires.
   const x = useMotionValue(-9999);
   const y = useMotionValue(-9999);
 
-  // Stable refs for collision-loop access without re-renders.
   const creaturesRef = useRef(creatures);
   const foundRef = useRef(found);
   const activeIdRef = useRef(activeId);
@@ -55,12 +47,8 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
   activeIdRef.current = activeId;
   onRevealRef.current = onReveal;
 
-  // Has the player actually moved a finger / mouse onto the surface yet?
-  // The dwell timer only runs once this flips true — see comment in the
-  // collision tick below.
   const pointerInteractedRef = useRef(false);
 
-  // Compute spotlight radius in CSS pixels from the surface size.
   const radiusPx = useMotionValue(120);
 
   useEffect(() => {
@@ -79,8 +67,6 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     };
   }, [radiusFraction, radiusPx]);
 
-  // Update the radial gradient on every motion-value tick. This runs
-  // outside the React render cycle.
   useMotionValueEvent(x, 'change', () => updateGradient());
   useMotionValueEvent(y, 'change', () => updateGradient());
   useMotionValueEvent(radiusPx, 'change', () => updateGradient());
@@ -91,9 +77,6 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     const cx = x.get();
     const cy = y.get();
     const r = radiusPx.get();
-    // Inner: warm transparent. Outer: near-opaque navy. The soft warm
-    // halo at the edge sells the "lantern" feel without obscuring the
-    // creature underneath.
     el.style.background =
       `radial-gradient(circle ${r}px at ${cx}px ${cy}px, ` +
       `rgba(255, 244, 200, 0) 0%, ` +
@@ -102,26 +85,32 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
       `rgba(5, 7, 20, 0.96) 100%)`;
   }
 
-  // Collision loop. rAF-driven, reads from motion values, writes to
-  // store via onReveal. Runs only while at least one creature is
-  // unfound — exits cleanly otherwise.
-  // Dwell threshold — the spotlight must continuously overlap a creature's
-  // bbox for this long before it counts as "found". 1 400 ms feels deliberate
-  // without being frustrating: a casual sweep won't trigger it, but holding
-  // the lantern still for a moment will.
-  const DWELL_MS = 1400;
+  // ── Gesture prevention (iPad Safari) ────────────────────────────────────
+  // Apple's proprietary gesturestart/change/end events fire for pinch/rotate
+  // multi-touch. preventDefault() here is belt-and-suspenders on top of the
+  // viewport meta tag's user-scalable=no, which some iOS versions ignore.
+  useEffect(() => {
+    function blockGesture(e: Event) {
+      e.preventDefault();
+    }
+    // passive: false required to call preventDefault
+    document.addEventListener('gesturestart',  blockGesture, { passive: false });
+    document.addEventListener('gesturechange', blockGesture, { passive: false });
+    document.addEventListener('gestureend',    blockGesture, { passive: false });
+    return () => {
+      document.removeEventListener('gesturestart',  blockGesture);
+      document.removeEventListener('gesturechange', blockGesture);
+      document.removeEventListener('gestureend',    blockGesture);
+    };
+  }, []);
 
-  // After finding a creature we enforce a short cooldown before the next
-  // target's dwell timer can begin. This prevents chain-fires when clustered
-  // creatures are all under the spotlight at once.
+  // ── Collision loop ───────────────────────────────────────────────────────
+  const DWELL_MS = 1400;
   const FIND_COOLDOWN_MS = 800;
 
   useEffect(() => {
     let raf = 0;
-    // Per-creature timestamp of when the spotlight first started overlapping
-    // its bbox (continuously). Reset to undefined when overlap breaks.
     const overlapStart: Record<string, number | undefined> = {};
-    // Timestamp of the most recent find — used to enforce FIND_COOLDOWN_MS.
     let lastFoundAt = 0;
 
     function tick() {
@@ -136,14 +125,11 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
       const cy = y.get();
       const r = radiusPx.get();
 
-      // Skip if pointer hasn't entered the surface yet.
       if (cx < 0 || cy < 0) {
         raf = requestAnimationFrame(tick);
         return;
       }
 
-      // Gate collision on at least one real pointer interaction so the
-      // centre-initialised spotlight can't auto-find creatures on spawn.
       if (!pointerInteractedRef.current) {
         raf = requestAnimationFrame(tick);
         return;
@@ -151,8 +137,6 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
 
       const now = performance.now();
 
-      // Enforce post-find cooldown — don't start a new dwell timer until
-      // FIND_COOLDOWN_MS has elapsed since the last successful find.
       if (now - lastFoundAt < FIND_COOLDOWN_MS) {
         raf = requestAnimationFrame(tick);
         return;
@@ -160,9 +144,6 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
 
       const seen = foundRef.current;
       const target = activeIdRef.current;
-      // ONLY check the active target. Panning through other unfound
-      // creatures must NOT mark them. If there's no active target, the
-      // game is between states (e.g. all found) — skip collision.
       const c = target && !seen.has(target)
         ? creaturesRef.current.find((cr) => cr.id === target)
         : undefined;
@@ -186,10 +167,13 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     return () => cancelAnimationFrame(raf);
   }, [x, y, radiusPx]);
 
-  // Pointer handlers. Use pointer events so mouse+touch+pen all work.
-  // Coordinate is computed against the surface bounding rect so it
-  // remains correct under transforms / scrolls.
-  function handlePointer(e: React.PointerEvent<HTMLDivElement>) {
+  // ── Pointer handlers ─────────────────────────────────────────────────────
+  // Split into down/move so we can call setPointerCapture only on down.
+  // setPointerCapture routes all subsequent pointer events for this
+  // pointerId to this element even if the finger drifts off its edge —
+  // critical for edge-to-edge play on iPad.
+
+  function updatePosition(e: React.PointerEvent<HTMLDivElement>) {
     const el = surfaceRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -198,8 +182,28 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     pointerInteractedRef.current = true;
   }
 
-  // Initial position: centre, so the player sees something on first
-  // render before they touch.
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    updatePosition(e);
+    // Capture so touchmove outside the element still tracks.
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // setPointerCapture can throw if the pointer is already released;
+      // ignore silently.
+    }
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    updatePosition(e);
+  }
+
+  // Release capture on cancel (incoming call, home button swipe, etc.)
+  function handlePointerCancel(e: React.PointerEvent<HTMLDivElement>) {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch { /* ignore */ }
+  }
+
   useEffect(() => {
     const el = surfaceRef.current;
     if (!el) return;
@@ -209,15 +213,11 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Style note: the overlay is `pointer-events: none` so taps fall
-  // through to the surface (which captures pointer events). The
-  // overlay uses `mix-blend-mode: multiply` for a subtle warm halo.
   const overlayStyle = useMemo<React.CSSProperties>(
     () => ({
       position: 'absolute',
       inset: 0,
       pointerEvents: 'none',
-      // initial gradient set in updateGradient()
     }),
     []
   );
@@ -226,8 +226,9 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     <div
       ref={surfaceRef}
       className="play-surface relative h-full w-full overflow-hidden"
-      onPointerMove={handlePointer}
-      onPointerDown={handlePointer}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerCancel={handlePointerCancel}
       role="application"
       aria-label="Searchlight play area — drag your finger to find creatures"
       data-testid="play-surface"

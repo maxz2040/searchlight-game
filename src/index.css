@@ -180,6 +180,17 @@ p {
   .surface-chrome-strong { background: var(--surface-chrome-strong); }
   .surface-card          { background: var(--surface-card);          }
   .surface-overlay       { background: var(--surface-overlay);       }
+
+  /* Backdrop blur — explicit -webkit- prefix for Safari < 16 where the
+     unprefixed property is not supported. Tailwind's backdrop-blur-sm
+     utility outputs both, but these bespoke classes don't go through
+     the same pipeline, so we add it explicitly here. */
+  .surface-overlay,
+  .surface-chrome,
+  .surface-chrome-strong {
+    -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+  }
 }
 
 /* Keyboard focus ring — visible only for keyboard nav. Default browser ring

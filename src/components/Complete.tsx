@@ -44,19 +44,21 @@ function StarRating({ stars }: { stars: number }) {
           <svg viewBox="0 0 32 32" className="h-10 w-10 drop-shadow-md">
             {n <= stars ? (
               // Filled star — warm amber
+              // sRGB hex: oklch(82% 0.16 72)→#d4a73c  oklch(64% 0.16 58)→#a07828
               <path
                 d="M16 3 L19.6 11.8 L29 12.9 L22.5 19.2 L24.3 28.5 L16 24 L7.7 28.5 L9.5 19.2 L3 12.9 L12.4 11.8 Z"
-                fill="oklch(82% 0.16 72)"
-                stroke="oklch(64% 0.16 58)"
+                fill="#d4a73c"
+                stroke="#a07828"
                 strokeWidth="1"
                 strokeLinejoin="round"
               />
             ) : (
               // Empty star — dim outline
+              // sRGB: oklch(96% 0.018 80 / 0.3) → rgba(245,238,222,0.3)
               <path
                 d="M16 3 L19.6 11.8 L29 12.9 L22.5 19.2 L24.3 28.5 L16 24 L7.7 28.5 L9.5 19.2 L3 12.9 L12.4 11.8 Z"
                 fill="none"
-                stroke="oklch(96% 0.018 80 / 0.3)"
+                stroke="rgba(245,238,222,0.3)"
                 strokeWidth="1.5"
                 strokeLinejoin="round"
               />
