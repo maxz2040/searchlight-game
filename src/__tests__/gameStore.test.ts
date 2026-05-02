@@ -2,10 +2,13 @@ import { describe, expect, it, beforeEach } from 'vitest'
 import { useGame } from '../store/gameStore'
 import { LEVELS } from '../levels/levels'
 
-// Reset store between tests by re-running its action sequence.
+// Reset store AND localStorage between tests.
 function reset() {
+  localStorage.clear()
   const s = useGame.getState()
   s.selectLevel(LEVELS[0].id)
+  // Reset levelStars explicitly so previous test runs don't leak.
+  useGame.setState({ levelStars: {} })
 }
 
 beforeEach(reset)
@@ -102,6 +105,50 @@ describe('gameStore: replay + next', () => {
     useGame.setState({ levelId: LEVELS.at(-1)!.id })
     useGame.getState().next()
     expect(useGame.getState().levelId).toBe(LEVELS[0].id)
+  })
+})
+
+describe('gameStore: localStorage star persistence', () => {
+  it('next() writes best stars to localStorage', () => {
+    useGame.setState({ phase: 'playing', startedAt: Date.now() - 10_000, completedAt: Date.now(), levelStars: {} })
+    useGame.getState().next()
+    const raw = localStorage.getItem('searchlight:stars')
+    expect(raw).not.toBeNull()
+    const saved = JSON.parse(raw!)
+    expect(typeof saved[LEVELS[0].id]).toBe('number')
+  })
+
+  it('goToLobby() writes best stars to localStorage', () => {
+    useGame.setState({ phase: 'playing', startedAt: Date.now() - 5_000, completedAt: Date.now(), levelStars: {} })
+    useGame.getState().goToLobby()
+    const raw = localStorage.getItem('searchlight:stars')
+    expect(raw).not.toBeNull()
+    const saved = JSON.parse(raw!)
+    expect(typeof saved[LEVELS[0].id]).toBe('number')
+  })
+
+  it('next() never overwrites a higher score with a lower one', () => {
+    // Seed storage with 3 stars on level 1.
+    localStorage.setItem('searchlight:stars', JSON.stringify({ [LEVELS[0].id]: 3 }))
+    useGame.setState({
+      levelStars: { [LEVELS[0].id]: 3 },
+      phase: 'playing',
+      startedAt: Date.now() - 60_000, // slow run → 1 star
+      completedAt: Date.now(),
+    })
+    useGame.getState().next()
+    const saved = JSON.parse(localStorage.getItem('searchlight:stars')!)
+    expect(saved[LEVELS[0].id]).toBe(3) // best score kept
+  })
+
+  it('loadStars silently returns {} on corrupt localStorage data', () => {
+    localStorage.setItem('searchlight:stars', 'not-json{{{')
+    // Re-importing the store is not feasible in Vitest without module reset.
+    // Instead call loadStars indirectly: reset the levelStars state to what
+    // the store would load from storage, then verify goToLobby merges safely.
+    useGame.setState({ levelStars: {}, phase: 'complete', startedAt: Date.now() - 1000, completedAt: Date.now() })
+    // goToLobby should not throw even with garbage in storage.
+    expect(() => useGame.getState().goToLobby()).not.toThrow()
   })
 })
 

@@ -12,6 +12,37 @@
 import { create } from 'zustand';
 import { LEVELS, type Level, getLevel, nextLevelId } from '../levels/levels';
 
+// ---------------------------------------------------------------------------
+// localStorage helpers — silent-fail so storage errors never crash the game.
+// ---------------------------------------------------------------------------
+
+const STORAGE_KEY = 'searchlight:stars';
+
+function loadStars(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    // Guard against corrupt data: only keep numeric values keyed by strings.
+    if (typeof parsed !== 'object' || parsed === null) return {};
+    const clean: Record<string, number> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof k === 'string' && typeof v === 'number') clean[k] = v;
+    }
+    return clean;
+  } catch {
+    return {};
+  }
+}
+
+function saveStars(stars: Record<string, number>): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stars));
+  } catch {
+    // Quota exceeded or private-browsing restriction — ignore.
+  }
+}
+
 export type Phase = 'loading' | 'tutorial' | 'playing' | 'complete' | 'lobby';
 
 interface GameState {
@@ -48,7 +79,7 @@ export const useGame = create<GameState>((set, get) => ({
   startedAt: null,
   completedAt: null,
   timeExpired: false,
-  levelStars: {},
+  levelStars: loadStars(),
 
   level() {
     const id = get().levelId;
@@ -134,6 +165,11 @@ export const useGame = create<GameState>((set, get) => ({
     const { levelId, levelStars } = get();
     const earned = get().stars();
     const nxt = nextLevelId(levelId);
+    const updatedStars = {
+      ...levelStars,
+      [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
+    };
+    saveStars(updatedStars);
     set({
       levelId: nxt ?? LEVELS[0].id,
       found: new Set(),
@@ -141,22 +177,21 @@ export const useGame = create<GameState>((set, get) => ({
       startedAt: null,
       completedAt: null,
       timeExpired: false,
-      levelStars: {
-        ...levelStars,
-        [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
-      },
+      levelStars: updatedStars,
     });
   },
   goToLobby() {
     // Save best stars, keep current levelId, show lobby.
     const { levelId, levelStars } = get();
     const earned = get().stars();
+    const updatedStars = {
+      ...levelStars,
+      [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
+    };
+    saveStars(updatedStars);
     set({
       phase: 'lobby',
-      levelStars: {
-        ...levelStars,
-        [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
-      },
+      levelStars: updatedStars,
     });
   },
 }));
