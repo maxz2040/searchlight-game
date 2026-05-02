@@ -1,7 +1,7 @@
 // Lobby — level-select screen shown between Complete and Tutorial.
 //
-// Three scene cards are displayed side-by-side (iPad landscape) with the
-// real AI-generated scene PNGs as card backgrounds. Each card shows:
+// Scene cards are displayed in a responsive grid (3 columns on iPad portrait,
+// 5 columns on iPad landscape ≥ 1100 px). Each card shows:
 //   * Scene image (dimmed, vignette overlay)
 //   * Level number badge + difficulty pill
 //   * Best star score (amber ★ filled, dim ☆ empty)
@@ -22,6 +22,8 @@ const SCENE_IMG: Record<string, string> = {
   forest: '/scenes/lvl-1-forest.png',
   meadow: '/scenes/lvl-2-meadow.png',
   beach:  '/scenes/lvl-3-shore.png',
+  cave:   '/scenes/lvl-4-cave.png',
+  snow:   '/scenes/lvl-5-snow.png',
 };
 
 // Per-level metadata shown on the card.
@@ -29,6 +31,8 @@ const LEVEL_META: Record<string, { num: number; difficulty: string; diffColor: s
   'lvl-1': { num: 1, difficulty: 'Beginner',   diffColor: '#78c47a' },
   'lvl-2': { num: 2, difficulty: 'Explorer',   diffColor: '#d4a73c' },
   'lvl-3': { num: 3, difficulty: 'Adventurer', diffColor: '#e07a5f' },
+  'lvl-4': { num: 4, difficulty: 'Expert',     diffColor: '#c97ae0' },
+  'lvl-5': { num: 5, difficulty: 'Master',     diffColor: '#e05f5f' },
 };
 
 // Deterministic sparkle positions.
@@ -58,7 +62,6 @@ function MiniStars({ filled, total = 3 }: { filled: number; total?: number }) {
       {Array.from({ length: total }, (_, i) => (
         <svg key={i} viewBox="0 0 20 20" className="h-5 w-5">
           {i < filled ? (
-            // Filled — amber gradient
             <>
               <defs>
                 <linearGradient id={`ls-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -75,7 +78,6 @@ function MiniStars({ filled, total = 3 }: { filled: number; total?: number }) {
               />
             </>
           ) : (
-            // Empty — dim outline
             <path
               d="M10 2 L12.4 7.4 L18.5 8.2 L14 12.5 L15.3 18.5 L10 15.5 L4.7 18.5 L6 12.5 L1.5 8.2 L7.6 7.4 Z"
               fill="rgba(245,238,222,0.07)"
@@ -119,7 +121,7 @@ function LevelCard({
     <motion.button
       initial={{ opacity: 0, y: 36, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.1 + index * 0.1, duration: 0.52, ease: EASE }}
+      transition={{ delay: 0.1 + index * 0.08, duration: 0.52, ease: EASE }}
       whileTap={{ scale: 0.97 }}
       onClick={() => onSelect(levelId)}
       className={`relative flex flex-col overflow-hidden rounded-3xl shadow-2xl focus:outline-none ${
@@ -130,8 +132,8 @@ function LevelCard({
       aria-label={`Play ${title}`}
       style={{ minWidth: 0 }}
     >
-      {/* Scene image — same dimming treatment as SceneBackground */}
-      <div className="relative h-44 w-full overflow-hidden">
+      {/* Scene image */}
+      <div className="relative h-36 w-full overflow-hidden">
         <img
           src={imgSrc}
           alt=""
@@ -141,7 +143,6 @@ function LevelCard({
           className="absolute inset-0 h-full w-full object-cover"
           style={{ filter: 'brightness(0.58) saturate(1.04)' }}
         />
-        {/* Bottom-fade so info panel blends in */}
         <div
           className="absolute inset-0"
           style={{
@@ -150,19 +151,19 @@ function LevelCard({
           }}
         />
         {/* Level badge — top left */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-          <div className="rounded-full bg-night-deep/80 px-2.5 py-0.5 text-xs font-black uppercase tracking-widest text-paper/80 backdrop-blur-sm">
-            Level {meta?.num ?? '?'}
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+          <div className="rounded-full bg-night-deep/80 px-2 py-0.5 text-xs font-black uppercase tracking-widest text-paper/80 backdrop-blur-sm">
+            {meta?.num ?? '?'}
           </div>
         </div>
         {/* Stars — top right */}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-2.5 right-2.5">
           <MiniStars filled={earnedStars} />
         </div>
         {/* Difficulty badge — bottom left of image */}
         {meta && (
           <div
-            className="absolute bottom-3 left-3 rounded-full px-2.5 py-0.5 text-xs font-bold backdrop-blur-sm"
+            className="absolute bottom-2.5 left-2.5 rounded-full px-2 py-0.5 text-xs font-bold backdrop-blur-sm"
             style={{
               color: meta.diffColor,
               background: `${meta.diffColor}22`,
@@ -175,19 +176,19 @@ function LevelCard({
       </div>
 
       {/* Info panel */}
-      <div className="surface-chrome-strong flex flex-col gap-2 p-4">
-        <h3 className="font-display text-[1.2rem] font-bold text-paper leading-tight text-left">
+      <div className="surface-chrome-strong flex flex-col gap-1.5 p-3">
+        <h3 className="font-display text-[1.05rem] font-bold text-paper leading-tight text-left line-clamp-1">
           {title}
         </h3>
-        <div className="flex items-center gap-3 text-xs font-semibold text-paper/60">
-          <span>{creatureCount} creatures</span>
+        <div className="flex items-center gap-2 text-xs font-semibold text-paper/60">
+          <span>{creatureCount} 🐾</span>
           <span className="text-paper/30">·</span>
           <span>{timeStr}</span>
         </div>
 
         {/* Play CTA */}
         <div
-          className={`mt-1 flex items-center justify-center gap-2 rounded-full py-2.5 text-base font-bold transition-colors ${
+          className={`mt-0.5 flex items-center justify-center gap-1.5 rounded-full py-2 text-sm font-bold transition-colors ${
             isActive
               ? 'bg-spotlight-edge text-night-deep'
               : 'bg-[rgba(245,238,222,0.10)] text-paper'
@@ -197,7 +198,7 @@ function LevelCard({
         </div>
       </div>
 
-      {/* Hover warm glow overlay — visible on focus/hover */}
+      {/* Hover warm glow */}
       <div
         className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-[260ms] hover:opacity-100"
         style={{ background: 'rgba(212,167,60,0.06)' }}
@@ -253,9 +254,9 @@ export function Lobby() {
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.44, ease: EASE }}
-        className="relative z-10 mb-8 flex flex-col items-center gap-2"
+        className="relative z-10 mb-6 flex flex-col items-center gap-2"
       >
-        <h1 className="font-display text-[2.4rem] font-bold text-paper leading-none tracking-[-0.01em]">
+        <h1 className="font-display text-[2.2rem] font-bold text-paper leading-none tracking-[-0.01em]">
           Choose Your World
         </h1>
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-paper/45">
@@ -263,8 +264,8 @@ export function Lobby() {
         </p>
       </motion.div>
 
-      {/* Level cards — 3-column row on iPad landscape */}
-      <div className="relative z-10 grid w-full max-w-4xl grid-cols-3 gap-5 px-8">
+      {/* Level cards — responsive: 3-col portrait / 5-col landscape */}
+      <div className="relative z-10 grid w-full max-w-6xl grid-cols-3 min-[1100px]:grid-cols-5 gap-4 px-6">
         {LEVELS.map((level, i) => (
           <LevelCard
             key={level.id}
@@ -286,7 +287,7 @@ export function Lobby() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.52, duration: 0.44, ease: EASE }}
-        className="relative z-10 mt-8 text-xs font-medium text-paper/35 tracking-wide"
+        className="relative z-10 mt-6 text-xs font-medium text-paper/35 tracking-wide"
       >
         Tap any world to begin
       </motion.p>

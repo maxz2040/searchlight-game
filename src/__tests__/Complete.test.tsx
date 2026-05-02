@@ -74,7 +74,8 @@ describe('Complete screen', () => {
     const { fireEvent } = await import('@testing-library/react')
     fireEvent.click(screen.getByRole('button', { name: /next level/i }))
     const s = useGame.getState()
-    expect(s.phase).toBe('tutorial')
+    // next() saves stars and goes to lobby so the player can choose from the grid.
+    expect(s.phase).toBe('lobby')
     expect(s.levelId).not.toBe(LEVELS[0].id)
     expect(s.found.size).toBe(0)
   })

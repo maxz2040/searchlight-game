@@ -31,17 +31,25 @@ export function circleHitsRect(circle: Circle, rect: Rect): boolean {
   return dx * dx + dy * dy <= circle.r * circle.r
 }
 
-/** Convert a creature's percent-coordinates + size to a pixel-space Rect
- *  centred on (c.x, c.y). */
+/**
+ * Convert a creature's percent-coordinates + size to a pixel-space Rect
+ * centred on (c.x, c.y).
+ *
+ * @param expansion  Optional uniform scale applied to the bounding-box size.
+ *                   Defaults to 1.0 (exact bbox). Values > 1 make the hitbox
+ *                   larger which gives more forgiving "close enough" detection.
+ *                   e.g. 1.25 → 25 % wider/taller, same centre.
+ */
 export function creatureRect(
   c: { x: number; y: number; w: number; h: number },
   surfaceWidth: number,
   surfaceHeight: number,
+  expansion = 1.0,
 ): Rect {
-  const w = c.w * surfaceWidth
-  const h = c.h * surfaceHeight
+  const w = c.w * surfaceWidth  * expansion
+  const h = c.h * surfaceHeight * expansion
   return {
-    x: c.x * surfaceWidth - w / 2,
+    x: c.x * surfaceWidth  - w / 2,
     y: c.y * surfaceHeight - h / 2,
     w,
     h,

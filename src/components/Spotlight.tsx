@@ -6,10 +6,19 @@
 // zero re-renders per pointer-move frame.
 //
 // Dwell ring: a small 84×84 SVG ring that appears at the spotlight
-// centre when the lantern is held over the active creature. The amber
+// centre when the lantern is held over any unfound creature. The amber
 // arc fills clockwise over DWELL_MS, giving kids a clear "keep holding"
 // affordance. It fades in on first contact and fades out (CSS transition)
 // when the finger moves away or after the find fires.
+//
+// Free-order discovery: the spotlight can reveal ANY unfound creature —
+// not just the "active" (suggested) target. The active target is still
+// prioritised when multiple bboxes overlap the spotlight so that the
+// guided hint system remains consistent.
+//
+// Hitbox expansion: creature bboxes are inflated by HIT_EXPANSION (25%)
+// at runtime so the hit zone is visually generous; this makes the game
+// feel more responsive for young players without changing the visual.
 //
 // iPad Safari hardening:
 //   * setPointerCapture on pointerdown — tracking survives finger drift
@@ -33,19 +42,24 @@ interface Props {
 }
 
 // Dwell-ring geometry (logical px).
-const RING_SIZE        = 84;          // SVG viewport width/height
-const RING_R           = 36;          // arc circle radius
-const RING_CX          = RING_SIZE / 2;
-const RING_STROKE      = 3.5;
-const CIRCUMFERENCE    = 2 * Math.PI * RING_R; // ≈ 226.2
+const RING_SIZE     = 84;
+const RING_R        = 36;
+const RING_CX       = RING_SIZE / 2;
+const RING_STROKE   = 3.5;
+const CIRCUMFERENCE = 2 * Math.PI * RING_R; // ≈ 226.2
+
+// Mechanic constants.
+const DWELL_MS         = 900;   // ms to hold still before a creature registers
+const FIND_COOLDOWN_MS = 500;   // ms grace period after a find before next dwell starts
+const HIT_EXPANSION    = 1.25;  // inflate creature bboxes by 25 % for generous registration
 
 export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal, children }: Props) {
-  const surfaceRef  = useRef<HTMLDivElement>(null);
-  const overlayRef  = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   // Dwell-ring DOM refs — updated directly in the rAF loop.
-  const dwellSvgRef  = useRef<SVGSVGElement>(null);
-  const dwellArcRef  = useRef<SVGCircleElement>(null);
+  const dwellSvgRef = useRef<SVGSVGElement>(null);
+  const dwellArcRef = useRef<SVGCircleElement>(null);
 
   const x        = useMotionValue(-9999);
   const y        = useMotionValue(-9999);
@@ -86,15 +100,13 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     const cx = x.get();
     const cy = y.get();
     const r  = radiusPx.get();
-    // Warmer, more magical lantern gradient:
-    //   transparent core → warm amber spill at beam edge → deep midnight
     el.style.background =
       `radial-gradient(circle ${r}px at ${cx}px ${cy}px, ` +
-      `rgba(255, 248, 215, 0) 0%, `        +  // crystal-clear centre
-      `rgba(255, 222, 130, 0.07) 52%, `    +  // warm amber halo
-      `rgba(255, 160, 50, 0.04) 66%, `     +  // orange flame edge
-      `rgba(8, 11, 27, 0.91) 76%, `        +  // night closes in
-      `rgba(3, 5, 18, 0.97) 100%)`;           // maximum darkness
+      `rgba(255, 248, 215, 0) 0%, `        +
+      `rgba(255, 222, 130, 0.07) 52%, `    +
+      `rgba(255, 160, 50, 0.04) 66%, `     +
+      `rgba(8, 11, 27, 0.91) 76%, `        +
+      `rgba(3, 5, 18, 0.97) 100%)`;
   }
 
   useMotionValueEvent(x,        'change', () => updateGradient());
@@ -115,15 +127,11 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
   }, []);
 
   // ── Collision + dwell-ring rAF loop ──────────────────────────────────────
-  const DWELL_MS        = 1400;
-  const FIND_COOLDOWN_MS = 800;
-
   useEffect(() => {
     let raf = 0;
     const overlapStart: Record<string, number | undefined> = {};
     let lastFoundAt = 0;
 
-    // Helpers that write directly to the SVG DOM.
     function hideRing() {
       const svg = dwellSvgRef.current;
       if (svg) svg.style.opacity = '0';
@@ -151,54 +159,67 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
       const cy = y.get();
       const r  = radiusPx.get();
 
-      if (cx < 0 || cy < 0)            { raf = requestAnimationFrame(tick); return; }
+      if (cx < 0 || cy < 0)             { raf = requestAnimationFrame(tick); return; }
       if (!pointerInteractedRef.current) { raf = requestAnimationFrame(tick); return; }
 
       const now = performance.now();
 
-      // Post-find cooldown — hide ring and skip collision.
+      // Post-find cooldown — hide ring and skip collision until it expires.
       if (now - lastFoundAt < FIND_COOLDOWN_MS) {
         hideRing();
         raf = requestAnimationFrame(tick);
         return;
       }
 
-      const seen   = foundRef.current;
-      const target = activeIdRef.current;
-      const c = target && !seen.has(target)
-        ? creaturesRef.current.find((cr) => cr.id === target)
-        : undefined;
+      const seen     = foundRef.current;
+      const activeId = activeIdRef.current;
+      const all      = creaturesRef.current;
 
-      if (c) {
-        const rect       = creatureRect(c, W, H);
-        const overlapping = circleHitsRect({ cx, cy, r }, rect);
+      // All unfound creatures, active target prioritised so it wins when
+      // multiple bboxes overlap the spotlight at the same position.
+      const unfound = all.filter((c) => !seen.has(c.id));
+      const ordered = activeId
+        ? [
+            ...unfound.filter((c) => c.id === activeId),
+            ...unfound.filter((c) => c.id !== activeId),
+          ]
+        : unfound;
 
-        if (overlapping) {
-          // Start or continue dwell.
-          if (overlapStart[c.id] == null) overlapStart[c.id] = now;
+      // Find the first overlapping creature.
+      let hit: Creature | undefined;
+      for (const c of ordered) {
+        if (circleHitsRect({ cx, cy, r }, creatureRect(c, W, H, HIT_EXPANSION))) {
+          hit = c;
+          break;
+        }
+      }
 
-          const elapsed  = now - overlapStart[c.id]!;
-          const progress = Math.min(1, elapsed / DWELL_MS);
+      if (hit) {
+        const c = hit;
+        if (overlapStart[c.id] == null) overlapStart[c.id] = now;
 
-          setRingProgress(cx, cy, progress);
+        const elapsed  = now - overlapStart[c.id]!;
+        const progress = Math.min(1, elapsed / DWELL_MS);
 
-          if (elapsed >= DWELL_MS) {
-            // Found! Hide ring before the celebration burst appears.
-            hideRing();
-            resetArc();
-            lastFoundAt = now;
-            overlapStart[c.id] = undefined;
-            onRevealRef.current(c.id);
-          }
-        } else {
-          // Spotlight moved off — reset dwell, fade ring out.
-          overlapStart[c.id] = undefined;
+        setRingProgress(cx, cy, progress);
+
+        if (elapsed >= DWELL_MS) {
           hideRing();
           resetArc();
+          lastFoundAt        = now;
+          overlapStart[c.id] = undefined;
+          onRevealRef.current(c.id);
+        }
+
+        // Reset dwell for every other unfound creature (single-focus).
+        for (const other of unfound) {
+          if (other.id !== c.id) overlapStart[other.id] = undefined;
         }
       } else {
-        // No active target.
+        // Not overlapping any creature — hide ring, reset all dwell timers.
         hideRing();
+        resetArc();
+        for (const c of all) overlapStart[c.id] = undefined;
       }
 
       raf = requestAnimationFrame(tick);
@@ -247,19 +268,16 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     pointerEvents: 'none',
   }), []);
 
-  // Dwell-ring SVG — starts hidden (opacity 0), positioned at top-left,
-  // translated in rAF to follow the spotlight centre. CSS transition on
-  // opacity gives a smooth fade when the finger moves off a creature.
   const ringSvgStyle = useMemo<React.CSSProperties>(() => ({
-    position:       'absolute',
-    top:            0,
-    left:           0,
-    width:          RING_SIZE,
-    height:         RING_SIZE,
-    pointerEvents:  'none',
-    opacity:        0,
-    transition:     'opacity 180ms ease',
-    willChange:     'transform, opacity',
+    position:      'absolute',
+    top:           0,
+    left:          0,
+    width:         RING_SIZE,
+    height:        RING_SIZE,
+    pointerEvents: 'none',
+    opacity:       0,
+    transition:    'opacity 180ms ease',
+    willChange:    'transform, opacity',
   }), []);
 
   return (
@@ -286,7 +304,6 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
         aria-hidden="true"
         data-testid="dwell-ring"
       >
-        {/* Background track — always visible when ring is shown */}
         <circle
           cx={RING_CX}
           cy={RING_CX}
@@ -295,7 +312,6 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
           stroke="rgba(212,167,60,0.25)"
           strokeWidth={RING_STROKE}
         />
-        {/* Progress arc — fills clockwise; dashoffset driven by rAF */}
         <circle
           ref={dwellArcRef}
           cx={RING_CX}
@@ -306,7 +322,7 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
           strokeWidth={RING_STROKE}
           strokeLinecap="round"
           strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={CIRCUMFERENCE}   /* 0% initially */
+          strokeDashoffset={CIRCUMFERENCE}
           transform={`rotate(-90 ${RING_CX} ${RING_CX})`}
         />
       </svg>

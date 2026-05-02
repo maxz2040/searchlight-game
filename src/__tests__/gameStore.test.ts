@@ -94,7 +94,8 @@ describe('gameStore: replay + next', () => {
     const s = useGame.getState()
     expect(s.levelId).toBe(LEVELS[1].id)
     expect(s.found.size).toBe(0)
-    expect(s.phase).toBe('tutorial')
+    // next() saves stars and goes to lobby so the player can choose from the grid.
+    expect(s.phase).toBe('lobby')
   })
 
   it('next() loops back to the first level after the last (no dead end for kids)', () => {

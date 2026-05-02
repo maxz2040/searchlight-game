@@ -12,7 +12,12 @@ describe('Loader', () => {
 
   it('starts at 0% width', () => {
     const { container } = render(<Loader onReady={() => {}} />)
-    const bar = container.querySelector('div[style*="width"]') as HTMLElement
+    // The progress bar is the first child div inside [role=progressbar].
+    // (Using querySelector('div[style*="width"]') would match the sparkle
+    // particles whose width is set as a raw px integer, not the bar.)
+    const progressbar = container.querySelector('[role="progressbar"]') as HTMLElement
+    expect(progressbar).toBeTruthy()
+    const bar = progressbar.querySelector('div') as HTMLElement
     expect(bar).toBeTruthy()
     expect(bar.style.width).toBe('0%')
   })

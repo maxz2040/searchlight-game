@@ -31,10 +31,12 @@ describe('Creature', () => {
   it('applies a flat-silhouette filter when not found', () => {
     const { container } = render(<Creature kind="leaf-pup" found={false} />)
     const img = container.querySelector('img') as HTMLImageElement
-    // brightness(0.18) saturate(0) collapses the sprite to a near-solid shadow
-    // — the kid sees a hideable shape but no colour information.
+    // brightness darkens to near-black; saturate + sepia + hue-rotate gives
+    // a cool moonlit blue silhouette. The kid sees a hideable shape but no
+    // bright colour information.
     expect(img.style.filter).toContain('brightness(')
-    expect(img.style.filter).toContain('saturate(0)')
+    expect(img.style.filter).toContain('saturate(')
+    expect(img.style.filter).toContain('sepia(')
   })
 
   it('applies a drop-shadow when found', () => {

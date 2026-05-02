@@ -1,0 +1,14 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "DueN5QoN8PZDggyqE3m4O"
+uri = "file://public/scenes/lvl-4-cave.png"
+type = "image"
+title = "crystal cave scene"
+
+[[generated]]
+id = "tp-f2lM96nEise6SGLVMp"
+uri = "file://public/scenes/lvl-5-snow.png"
+type = "image"
+title = "snowy mountain scene"

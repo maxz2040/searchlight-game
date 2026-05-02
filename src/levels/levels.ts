@@ -32,7 +32,7 @@ export interface Creature {
   name: string;
 }
 
-export type SceneKind = 'forest' | 'meadow' | 'beach';
+export type SceneKind = 'forest' | 'meadow' | 'beach' | 'cave' | 'snow';
 
 export interface Level {
   id: string;
@@ -53,15 +53,15 @@ export const LEVELS: Level[] = [
     spotlight: 0.16,
     timeLimit: 120,
     creatures: [
-      { id: 'c1', kind: 'leaf-pup', x: 0.105, y: 0.605, w: 0.105, h: 0.19, name: 'Leafu' },
-      { id: 'c2', kind: 'leaf-pup', x: 0.205, y: 0.7, w: 0.115, h: 0.11, name: 'Sprout' },
-      { id: 'c3', kind: 'pebble-pal', x: 0.295, y: 0.625, w: 0.075, h: 0.085, name: 'Roxxo' },
-      { id: 'c4', kind: 'shroom-buddy', x: 0.435, y: 0.66, w: 0.08, h: 0.14, name: 'Shroomi' },
-      { id: 'c5', kind: 'pebble-pal', x: 0.52, y: 0.73, w: 0.115, h: 0.135, name: 'Cobble' },
-      { id: 'c6', kind: 'puff-bird', x: 0.605, y: 0.77, w: 0.075, h: 0.09, name: 'Puffi' },
-      { id: 'c7', kind: 'puff-bird', x: 0.685, y: 0.785, w: 0.075, h: 0.085, name: 'Featherly' },
-      { id: 'c8', kind: 'shroom-buddy', x: 0.73, y: 0.555, w: 0.075, h: 0.14, name: 'Capper' },
-      { id: 'c9', kind: 'puff-bird', x: 0.79, y: 0.51, w: 0.06, h: 0.075, name: 'Chirpie' },
+      { id: 'c1', kind: 'leaf-pup',     x: 0.105, y: 0.605, w: 0.105, h: 0.19,  name: 'Leafu'    },
+      { id: 'c2', kind: 'leaf-pup',     x: 0.205, y: 0.7,   w: 0.115, h: 0.11,  name: 'Sprout'   },
+      { id: 'c3', kind: 'pebble-pal',   x: 0.295, y: 0.625, w: 0.075, h: 0.085, name: 'Roxxo'    },
+      { id: 'c4', kind: 'shroom-buddy', x: 0.435, y: 0.66,  w: 0.08,  h: 0.14,  name: 'Shroomi'  },
+      { id: 'c5', kind: 'pebble-pal',   x: 0.52,  y: 0.73,  w: 0.115, h: 0.135, name: 'Cobble'   },
+      { id: 'c6', kind: 'puff-bird',    x: 0.605, y: 0.77,  w: 0.075, h: 0.09,  name: 'Puffi'    },
+      { id: 'c7', kind: 'puff-bird',    x: 0.685, y: 0.785, w: 0.075, h: 0.085, name: 'Featherly' },
+      { id: 'c8', kind: 'shroom-buddy', x: 0.73,  y: 0.555, w: 0.075, h: 0.14,  name: 'Capper'   },
+      { id: 'c9', kind: 'puff-bird',    x: 0.79,  y: 0.51,  w: 0.06,  h: 0.075, name: 'Chirpie'  },
     ],
   },
   {
@@ -71,14 +71,14 @@ export const LEVELS: Level[] = [
     spotlight: 0.16,
     timeLimit: 100,
     creatures: [
-      { id: 'c1', kind: 'pebble-pal', x: 0.08, y: 0.555, w: 0.075, h: 0.15, name: 'Roxxo' },
-      { id: 'c2', kind: 'puff-bird', x: 0.205, y: 0.7, w: 0.09, h: 0.18, name: 'Puffi' },
-      { id: 'c3', kind: 'bolt-bunny', x: 0.31, y: 0.555, w: 0.085, h: 0.26, name: 'Zappo' },
-      { id: 'c4', kind: 'bolt-bunny', x: 0.395, y: 0.585, w: 0.085, h: 0.26, name: 'Sparky' },
-      { id: 'c5', kind: 'flame-cub', x: 0.5, y: 0.76, w: 0.09, h: 0.23, name: 'Emberi' },
-      { id: 'c6', kind: 'leaf-pup', x: 0.625, y: 0.52, w: 0.08, h: 0.18, name: 'Leafu' },
-      { id: 'c7', kind: 'flame-cub', x: 0.76, y: 0.49, w: 0.075, h: 0.15, name: 'Cinder' },
-      { id: 'c8', kind: 'leaf-pup', x: 0.89, y: 0.56, w: 0.08, h: 0.18, name: 'Sprout' },
+      { id: 'c1', kind: 'pebble-pal',  x: 0.08,  y: 0.555, w: 0.075, h: 0.15,  name: 'Roxxo'  },
+      { id: 'c2', kind: 'puff-bird',   x: 0.205, y: 0.7,   w: 0.09,  h: 0.18,  name: 'Puffi'  },
+      { id: 'c3', kind: 'bolt-bunny',  x: 0.31,  y: 0.555, w: 0.085, h: 0.26,  name: 'Zappo'  },
+      { id: 'c4', kind: 'bolt-bunny',  x: 0.395, y: 0.585, w: 0.085, h: 0.26,  name: 'Sparky' },
+      { id: 'c5', kind: 'flame-cub',   x: 0.5,   y: 0.76,  w: 0.09,  h: 0.23,  name: 'Emberi' },
+      { id: 'c6', kind: 'leaf-pup',    x: 0.625, y: 0.52,  w: 0.08,  h: 0.18,  name: 'Leafu'  },
+      { id: 'c7', kind: 'flame-cub',   x: 0.76,  y: 0.49,  w: 0.075, h: 0.15,  name: 'Cinder' },
+      { id: 'c8', kind: 'leaf-pup',    x: 0.89,  y: 0.56,  w: 0.08,  h: 0.18,  name: 'Sprout' },
     ],
   },
   {
@@ -88,13 +88,46 @@ export const LEVELS: Level[] = [
     spotlight: 0.16,
     timeLimit: 90,
     creatures: [
-      { id: 'c1', kind: 'star-fish', x: 0.13, y: 0.7, w: 0.11, h: 0.27, name: 'Twinkli' },
-      { id: 'c2', kind: 'aqua-spark', x: 0.345, y: 0.58, w: 0.09, h: 0.25, name: 'Splashu' },
-      { id: 'c3', kind: 'puff-bird', x: 0.475, y: 0.62, w: 0.08, h: 0.18, name: 'Puffi' },
-      { id: 'c4', kind: 'aqua-spark', x: 0.595, y: 0.7, w: 0.08, h: 0.22, name: 'Drizzle' },
-      { id: 'c5', kind: 'pebble-pal', x: 0.755, y: 0.745, w: 0.085, h: 0.18, name: 'Roxxo' },
-      { id: 'c6', kind: 'star-fish', x: 0.835, y: 0.51, w: 0.06, h: 0.14, name: 'Glimmer' },
-      { id: 'c7', kind: 'pebble-pal', x: 0.91, y: 0.7, w: 0.075, h: 0.15, name: 'Cobble' },
+      { id: 'c1', kind: 'star-fish',  x: 0.13,  y: 0.7,   w: 0.11,  h: 0.27,  name: 'Twinkli' },
+      { id: 'c2', kind: 'aqua-spark', x: 0.345, y: 0.58,  w: 0.09,  h: 0.25,  name: 'Splashu' },
+      { id: 'c3', kind: 'puff-bird',  x: 0.475, y: 0.62,  w: 0.08,  h: 0.18,  name: 'Puffi'   },
+      { id: 'c4', kind: 'aqua-spark', x: 0.595, y: 0.7,   w: 0.08,  h: 0.22,  name: 'Drizzle' },
+      { id: 'c5', kind: 'pebble-pal', x: 0.755, y: 0.745, w: 0.085, h: 0.18,  name: 'Roxxo'   },
+      { id: 'c6', kind: 'star-fish',  x: 0.835, y: 0.51,  w: 0.06,  h: 0.14,  name: 'Glimmer' },
+      { id: 'c7', kind: 'pebble-pal', x: 0.91,  y: 0.7,   w: 0.075, h: 0.15,  name: 'Cobble'  },
+    ],
+  },
+  {
+    id: 'lvl-4',
+    title: 'Crystal Caves',
+    scene: 'cave',
+    spotlight: 0.15,
+    timeLimit: 90,
+    creatures: [
+      { id: 'c1', kind: 'aqua-spark',   x: 0.09,  y: 0.62,  w: 0.09,  h: 0.22,  name: 'Glowfi'  },
+      { id: 'c2', kind: 'bolt-bunny',   x: 0.20,  y: 0.57,  w: 0.085, h: 0.25,  name: 'Zapli'   },
+      { id: 'c3', kind: 'puff-bird',    x: 0.32,  y: 0.71,  w: 0.08,  h: 0.18,  name: 'Lumini'  },
+      { id: 'c4', kind: 'star-fish',    x: 0.45,  y: 0.65,  w: 0.10,  h: 0.24,  name: 'Sparkli' },
+      { id: 'c5', kind: 'flame-cub',    x: 0.57,  y: 0.69,  w: 0.09,  h: 0.22,  name: 'Embero'  },
+      { id: 'c6', kind: 'shroom-buddy', x: 0.68,  y: 0.59,  w: 0.08,  h: 0.16,  name: 'Mushoo'  },
+      { id: 'c7', kind: 'pebble-pal',   x: 0.79,  y: 0.74,  w: 0.08,  h: 0.16,  name: 'Crysto'  },
+      { id: 'c8', kind: 'leaf-pup',     x: 0.90,  y: 0.57,  w: 0.085, h: 0.19,  name: 'Mossi'   },
+    ],
+  },
+  {
+    id: 'lvl-5',
+    title: 'Snowy Peak',
+    scene: 'snow',
+    spotlight: 0.14,
+    timeLimit: 75,
+    creatures: [
+      { id: 'c1', kind: 'pebble-pal',  x: 0.10,  y: 0.68,  w: 0.09,  h: 0.18,  name: 'Frosty'   },
+      { id: 'c2', kind: 'bolt-bunny',  x: 0.23,  y: 0.55,  w: 0.085, h: 0.26,  name: 'Snowball' },
+      { id: 'c3', kind: 'leaf-pup',    x: 0.37,  y: 0.72,  w: 0.09,  h: 0.19,  name: 'Icicle'   },
+      { id: 'c4', kind: 'puff-bird',   x: 0.50,  y: 0.60,  w: 0.08,  h: 0.18,  name: 'Blizzi'   },
+      { id: 'c5', kind: 'aqua-spark',  x: 0.63,  y: 0.65,  w: 0.09,  h: 0.22,  name: 'Sleeto'   },
+      { id: 'c6', kind: 'star-fish',   x: 0.76,  y: 0.55,  w: 0.08,  h: 0.20,  name: 'Aurora'   },
+      { id: 'c7', kind: 'flame-cub',   x: 0.89,  y: 0.70,  w: 0.085, h: 0.20,  name: 'Embrus'   },
     ],
   },
 ];

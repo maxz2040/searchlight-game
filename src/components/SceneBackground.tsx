@@ -13,6 +13,8 @@ const SCENE_BY_KIND: Record<SceneKind, string> = {
   forest: '/scenes/lvl-1-forest.png',
   meadow: '/scenes/lvl-2-meadow.png',
   beach:  '/scenes/lvl-3-shore.png',
+  cave:   '/scenes/lvl-4-cave.png',
+  snow:   '/scenes/lvl-5-snow.png',
 };
 
 export function SceneBackground({ scene }: { scene: SceneKind }) {

@@ -9,7 +9,7 @@
 // Coverage:
 //   1. Spotlight collision on out-of-bounds bbox (x>1, y<0)
 //   2. Dwell timer reset on fast horizontal skim — 30-step sweep marks NOTHING
-//   3. Multiple overlapping bboxes — both should mark after dwell
+//   3. Multiple overlapping bboxes — both mark after sequential dwell
 //   4. Video onError fallthrough to card
 //   5. Service worker v2→v3 cache eviction
 //   6. Empty-creatures level — no crash, ProgressPill "0 / 0", auto-completes
@@ -20,6 +20,7 @@
 //  11. Touch + mouse interleave on iPad project
 //  12. (Defect repro) Auto-mark on spawn — spotlight starts at surface
 //      centre; a creature whose bbox covers centre must NOT auto-mark.
+//  13. Free-order: dwelling on a non-active creature DOES mark it.
 
 import { test, expect, type Page } from '@playwright/test';
 
@@ -167,13 +168,13 @@ test.describe('v2 negative — spotlight + collision', () => {
     );
   });
 
-  test('2. fast 30-step horizontal sweep marks NOTHING (dwell honoured)', async ({ page }) => {
+  test('2. fast 30-step horizontal sweep marks NOTHING (dwell of 900 ms honoured)', async ({ page }) => {
     await gotoFresh(page);
     await startPlaying(page);
     const box = await surfaceBox(page);
     // Sweep across the full width in 30 steps very quickly. Total wall
     // time is whatever the mouse driver decides, but each individual
-    // overlap is brief — well under 700 ms.
+    // overlap is brief — well under 900 ms.
     const y = box.y + box.height * 0.6;
     await page.mouse.move(box.x + 5, y);
     const t0 = Date.now();
@@ -182,7 +183,7 @@ test.describe('v2 negative — spotlight + collision', () => {
       await page.mouse.move(box.x + box.width * fx, y, { steps: 1 });
     }
     const elapsed = Date.now() - t0;
-    // Confirm we actually moved fast (well under 700ms per creature).
+    // Confirm we actually moved fast (well under 900ms per creature).
     expect(elapsed).toBeLessThan(2500);
     await page.waitForTimeout(300);
     expect(await getFound(page)).toEqual([]);
@@ -208,19 +209,19 @@ test.describe('v2 negative — spotlight + collision', () => {
       ).__searchlight.store.getState().selectLevel('lvl-1'),
     );
     await startPlaying(page);
-    // Active-target gating: only one creature can mark at a time. Parking the
-    // spotlight on the overlap means `a` (first unfound) marks after 700ms,
-    // then `b` becomes the active target and ALSO marks after another 700ms
-    // since the spotlight is still on its bbox. Total ≥ 1400ms.
+    // Active-target priority: `a` (first unfound) marks after ~900 ms,
+    // then `b` becomes active and also marks after another ~900 ms + 500 ms
+    // cooldown. Spotlight stays on the overlap throughout.
+    // Total minimum: 900 + 500 + 900 = 2300 ms. Use 2800 ms for buffer.
     await pointerTo(page, 0.41, 0.405);
-    await page.waitForTimeout(1800);
+    await page.waitForTimeout(2800);
     const found = await getFound(page);
     expect(found.sort()).toEqual(['a', 'b']);
   });
 
   test('12. spotlight does NOT auto-mark a creature on initial spawn', async ({ page }) => {
     // Defect repro: Spotlight.tsx initialises x/y to surface centre, so a
-    // creature whose bbox covers that centre would auto-mark after 700ms
+    // creature whose bbox covers that centre would auto-mark after dwell time
     // before the player even touches the screen. Verify this is fixed.
     await gotoFresh(page);
     await page.evaluate(() => {
@@ -240,12 +241,12 @@ test.describe('v2 negative — spotlight + collision', () => {
       ).__searchlight.store.getState().selectLevel('lvl-1'),
     );
     await startPlaying(page);
-    // Wait > dwell without ANY pointer movement.
+    // Wait > dwell (900 ms) without ANY pointer movement.
     await page.waitForTimeout(1100);
     expect(await getFound(page)).toEqual([]);
     // Once the player actually moves onto the bbox, dwell should mark it.
     await pointerTo(page, 0.5, 0.5);
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(1100);
     expect(await getFound(page)).toEqual(['centre']);
   });
 });
@@ -363,10 +364,12 @@ test.describe('v2 negative — UI / state machine', () => {
     const level = await getLevel(page);
     // Pick an empty area: top-left corner is empty for lvl-1.
     const empty = { x: 0.02, y: 0.05 };
-    // Make sure no creature bbox actually covers the empty point.
+    // Make sure no creature bbox (even with 1.25× expansion) covers the empty point.
     for (const c of level.creatures) {
-      const inX = empty.x > c.x - c.w / 2 && empty.x < c.x + c.w / 2;
-      const inY = empty.y > c.y - c.h / 2 && empty.y < c.y + c.h / 2;
+      const halfW = (c.w / 2) * 1.25;
+      const halfH = (c.h / 2) * 1.25;
+      const inX = empty.x > c.x - halfW && empty.x < c.x + halfW;
+      const inY = empty.y > c.y - halfH && empty.y < c.y + halfH;
       expect(inX && inY).toBe(false);
     }
     const box = await surfaceBox(page);
@@ -459,55 +462,71 @@ test.describe('v2 negative — service worker / video', () => {
   });
 });
 
-test.describe('Active-target gating (v2 UAT fix)', () => {
-  test('panning the spotlight past non-active unfound creatures does NOT mark them', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForFunction(() => Boolean((window as { __searchlight?: unknown }).__searchlight))
+test.describe('Free-order discovery (v3 mechanic)', () => {
+  test('13. dwelling on a non-active unfound creature DOES mark it', async ({ page }) => {
+    // This test replaced the old "Active-target gating" test which asserted
+    // that ONLY the active target could be found. The v3 mechanic allows
+    // finding any creature in any order; the active target is merely
+    // prioritised when bboxes overlap.
+    await page.goto('/');
+    await page.waitForFunction(() =>
+      Boolean((window as unknown as { __searchlight?: unknown }).__searchlight),
+    );
     await page.evaluate(() => {
       const h = (window as unknown as {
         __searchlight: { levels: { id: string }[]; store: { getState(): { selectLevel(id: string): void } } }
-      }).__searchlight
-      h.store.getState().selectLevel(h.levels[0].id)
-    })
-    await page.getByRole('button', { name: /start playing/i }).click()
-    await page.waitForFunction(() => {
-      const el = document.querySelector('[data-testid="play-surface"]') as HTMLElement | null
-      if (!el) return false
-      const r = el.getBoundingClientRect()
-      const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
-      let cur: Element | null = top
-      while (cur) { if (cur === el) return true; cur = cur.parentElement }
-      return false
-    }, { timeout: 4000 })
+      }).__searchlight;
+      h.store.getState().selectLevel(h.levels[0].id);
+    });
+    await page.getByRole('button', { name: /start playing/i }).click();
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('[data-testid="play-surface"]') as HTMLElement | null;
+        if (!el) return false;
+        const r = el.getBoundingClientRect();
+        const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        let cur: Element | null = top;
+        while (cur) { if (cur === el) return true; cur = cur.parentElement; }
+        return false;
+      },
+      null,
+      { timeout: 4000 },
+    );
 
     const lvl = await page.evaluate(() => {
       type L = { creatures: { id: string; x: number; y: number; w: number; h: number }[] }
-      const h = (window as unknown as { __searchlight: { store: { getState(): { level(): L } } } }).__searchlight
-      return h.store.getState().level()
-    })
-    const surface = page.getByTestId('play-surface')
-    const box = await surface.boundingBox()
-    if (!box) throw new Error('no box')
+      const h = (window as unknown as { __searchlight: { store: { getState(): { level(): L } } } }).__searchlight;
+      return h.store.getState().level();
+    });
+    const surface = page.getByTestId('play-surface');
+    const box = await surface.boundingBox();
+    if (!box) throw new Error('no box');
 
-    // Pick the unfound creature SPATIALLY FURTHEST from creatures[0] (the
-    // active target). Spotlight radius is 0.16 of min(W,H) so we want the
-    // dwell-target far enough that the spotlight at its centre cannot
-    // overlap c1's bbox even partially. Then dwell on it for 2s — it must
-    // NOT mark.
-    const c1 = lvl.creatures[0]
+    // Pick the creature SPATIALLY FURTHEST from creatures[0] (the active
+    // target) so the spotlight cannot overlap c1's bbox when aimed at it.
+    const c1 = lvl.creatures[0];
     const target = lvl.creatures.slice(1).reduce((best, c) => {
-      const d = Math.hypot(c.x - c1.x, c.y - c1.y)
-      const dBest = Math.hypot(best.x - c1.x, best.y - c1.y)
-      return d > dBest ? c : best
-    })
-    await page.mouse.move(box.x + box.width * target.x, box.y + box.height * target.y, { steps: 5 })
-    await page.waitForTimeout(2000)
+      const d = Math.hypot(c.x - c1.x, c.y - c1.y);
+      const dBest = Math.hypot(best.x - c1.x, best.y - c1.y);
+      return d > dBest ? c : best;
+    });
+
+    // Dwell on the far creature — it MUST now be found (free-order mechanic).
+    await page.mouse.move(
+      box.x + box.width  * target.x,
+      box.y + box.height * target.y,
+      { steps: 5 },
+    );
+    await expect(page.getByTestId(`creature-${target.id}`)).toHaveAttribute(
+      'data-found', 'true', { timeout: 5_000 },
+    );
 
     const foundIds = await page.evaluate(() => {
-      const h = (window as unknown as { __searchlight: { store: { getState(): { found: Set<string> } } } }).__searchlight
-      return [...h.store.getState().found]
-    })
-    // The far creature must NOT be marked — it's not active.
-    expect(foundIds).not.toContain(target.id)
-  })
-})
+      const h = (window as unknown as { __searchlight: { store: { getState(): { found: Set<string> } } } }).__searchlight;
+      return [...h.store.getState().found];
+    });
+    // The far creature IS found; c1 (active target, never touched) is NOT.
+    expect(foundIds).toContain(target.id);
+    expect(foundIds).not.toContain(c1.id);
+  });
+});

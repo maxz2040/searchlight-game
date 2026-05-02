@@ -178,15 +178,13 @@ test.describe('Level completion + progression', () => {
     await expect.poll(() => getPhase(page)).toBe('complete')
   })
 
-  test('next-level button advances to level 2 and resets state', async ({ page }) => {
+  test('next-level button goes to lobby with the next level selected', async ({ page }) => {
     await gotoFreshGame(page)
     await startPlaying(page)
     const level1 = await getCurrentLevel(page)
     for (const c of level1.creatures) {
       await dragSpotlightTo(page, c.x, c.y)
-      // Wait for the dwell timer (700ms) before moving to the next bbox so
-      // each creature reliably marks. Without this the rapid loop fires
-      // pointer-moves so fast the dwell never elapses on any one bbox.
+      // Wait for each find before moving to avoid dwell-timer interference.
       await expect(page.getByTestId(`creature-${c.id}`)).toHaveAttribute(
         'data-found',
         'true',
@@ -195,9 +193,10 @@ test.describe('Level completion + progression', () => {
     }
     await expect(page.getByRole('button', { name: /next level/i })).toBeVisible({ timeout: 5_000 })
     await page.getByRole('button', { name: /next level/i }).click()
+    // next() advances levelId then goes to lobby.
+    await expect.poll(() => getPhase(page)).toBe('lobby')
     const level2 = await getCurrentLevel(page)
     expect(level2.id).not.toBe(level1.id)
-    await expect.poll(() => getPhase(page)).toBe('tutorial')
   })
 
   test('replay resets the same level', async ({ page }) => {
