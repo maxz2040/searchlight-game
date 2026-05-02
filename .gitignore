@@ -43,6 +43,12 @@ docs/model-comparison.html
 # Scene verification screenshots — auto-regenerable via scratch/verify-scenes.ts
 docs/v1-scene-verify/
 
+# UAT and impeccable-critique screenshot runs — auto-regenerable via the
+# capture/UAT scripts; ~94 MB combined, not shipped to production.
+docs/impeccable-critique/
+docs/v1-uat/
+docs/v2-uat/
+
 # Character reference sheets (~4-5MB each × 50 = 215MB, regenerable via
 # scratch/sheets/dispatch.sh). Used as compositing inputs only — not
 # shipped to production.
