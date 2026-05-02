@@ -38,11 +38,13 @@ interface Props {
 }
 
 // Dwell-ring geometry (logical px).
-const RING_SIZE     = 84;
-const RING_R        = 36;
+// Larger ring (104 px / R=44) makes the fill-arc clearly legible for young
+// children — the progress is satisfying and easy to track with a fingertip.
+const RING_SIZE     = 104;
+const RING_R        = 44;
 const RING_CX       = RING_SIZE / 2;
-const RING_STROKE   = 3.5;
-const CIRCUMFERENCE = 2 * Math.PI * RING_R; // ≈ 226.2
+const RING_STROKE   = 4;
+const CIRCUMFERENCE = 2 * Math.PI * RING_R; // ≈ 276.5
 
 // Mechanic constants.
 const DWELL_MS         = 900;   // ms to hold still before a creature registers

@@ -119,7 +119,11 @@ export function Complete() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (phase === 'card') playFanfare();
+    if (phase === 'card') {
+      playFanfare();
+      // Celebratory triple-pulse — satisfying for young players on iPad.
+      if ('vibrate' in navigator) navigator.vibrate?.([60, 40, 80, 40, 100]);
+    }
   }, [phase]);
 
   useEffect(() => {

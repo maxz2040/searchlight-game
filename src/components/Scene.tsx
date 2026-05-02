@@ -191,10 +191,12 @@ export function Scene() {
   function bumpIdle() {
     setHintFor(null);
     if (idleTimer.current) window.clearTimeout(idleTimer.current);
+    // 3.5 s idle before the gentle hint ring appears — long enough that it
+    // only shows when a 3-year-old is genuinely stuck, not on every pause.
     idleTimer.current = window.setTimeout(() => {
       const next = level.creatures.find((c) => !found.has(c.id));
       if (next) setHintFor(next.id);
-    }, 1600);
+    }, 3500);
   }
 
   useEffect(() => {
@@ -208,9 +210,13 @@ export function Scene() {
       if (found.has(creatureId)) return;
       markFound(creatureId);
       playPing();
-      if ('vibrate' in navigator) navigator.vibrate?.(12);
+      // 60 ms is clearly perceptible on iPad without being startling for toddlers.
+      if ('vibrate' in navigator) navigator.vibrate?.([60]);
 
       const c = level.creatures.find((cr) => cr.id === creatureId);
+      // Announce to screen readers.
+      const announcer = document.getElementById('find-announce');
+      if (c && announcer) announcer.textContent = `Found ${c.name}!`;
       if (c) {
         const burstId = `${creatureId}-${Date.now()}`;
         setBursts((prev) => [...prev, { id: burstId, x: c.x, y: c.y, name: c.name }]);
@@ -228,10 +234,14 @@ export function Scene() {
     return () => { burstTimeout.current.forEach((tid) => window.clearTimeout(tid)); };
   }, []);
 
-  const total       = level.creatures.length;
-  const foundCount  = total - remaining;
+  const total        = level.creatures.length;
+  const foundCount   = total - remaining;
   const activeTarget = level.creatures.find((c) => !found.has(c.id));
-  void hintFor;
+
+  // Creature to show the idle hint ring on (after 3.5 s of no movement).
+  const hintCreature = hintFor
+    ? level.creatures.find((c) => c.id === hintFor && !found.has(c.id)) ?? null
+    : null;
 
   return (
     <div
@@ -272,6 +282,36 @@ export function Scene() {
           <FoundBurst bursts={bursts} />
         </AnimatePresence>
       </Spotlight>
+
+      {/* Idle hint — amber glow ring pulses at the unfound target creature
+          after 3.5 s of no pointer movement. Rendered ABOVE the spotlight
+          overlay so it pierces the darkness and guides young players. */}
+      {hintCreature && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute animate-hint-pulse"
+          style={{
+            left:         `${hintCreature.x * 100}%`,
+            top:          `${hintCreature.y * 100}%`,
+            width:        `${Math.max(hintCreature.w, hintCreature.h) * 160}%`,
+            height:       `${Math.max(hintCreature.w, hintCreature.h) * 160}%`,
+            transform:    'translate(-50%, -50%)',
+            zIndex:       8,
+            borderRadius: '50%',
+            background:   'rgba(212,167,60,0.14)',
+            border:       '3px solid rgba(212,167,60,0.55)',
+            boxShadow:    '0 0 32px rgba(212,167,60,0.50), 0 0 12px rgba(212,167,60,0.30)',
+          }}
+        />
+      )}
+
+      {/* Hidden aria-live region — announces creature finds to screen readers. */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        id="find-announce"
+      />
 
       {/* HUD */}
       <SceneHud title={level.title} />

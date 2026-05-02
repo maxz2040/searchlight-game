@@ -53,9 +53,12 @@ export function Creature({ kind, found }: Props) {
                 'drop-shadow(0 3px 8px rgba(0,0,0,0.30))',
             }
           : {
+              // brightness(0.22) is still clearly "hidden" in full darkness but
+              // gives a subtle shadow hint when the spotlight sweeps over the
+              // creature — helping 3-year-olds aim at the right spot.
               filter:
-                'brightness(0.12) saturate(0.15) sepia(0.4) ' +
-                'hue-rotate(200deg) opacity(0.88)',
+                'brightness(0.22) saturate(0.15) sepia(0.4) ' +
+                'hue-rotate(200deg) opacity(0.95)',
             }
       }
     />

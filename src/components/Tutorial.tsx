@@ -17,6 +17,8 @@ const SCENE_LABEL: Record<string, string> = {
   forest: 'Whispering Forest',
   meadow: 'Meadow at Dusk',
   beach:  'Starlit Shore',
+  cave:   'Crystal Cave',
+  snow:   'Snowy Peaks',
 };
 
 const ENTRY = { duration: 0.44, ease: [0.16, 1, 0.3, 1] as const };
@@ -153,6 +155,19 @@ export function Tutorial() {
           />
           <span className="relative">Let&rsquo;s begin</span>
           <LanternIcon className="relative h-6 w-6 opacity-90" />
+        </motion.button>
+
+        {/* Skip — for parents replaying a level; HIG says tutorial should never
+            be a mandatory gate. Unlocks audio just like the main button. */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ ...ENTRY, delay: 0.80 }}
+          onClick={handleBegin}
+          className="text-paper/45 text-sm font-semibold underline underline-offset-2 active:text-paper/75 transition-colors duration-[120ms] min-h-[44px] px-4"
+          aria-label="Skip tutorial"
+        >
+          Skip
         </motion.button>
       </div>
     </motion.div>
