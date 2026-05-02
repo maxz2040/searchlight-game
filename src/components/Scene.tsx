@@ -2,22 +2,13 @@
 // playable level. Owns the per-level state subscription and feeds the
 // Spotlight component its creature list.
 //
-// Hint glow: when the player has been idle for more than 1.6s, the
-// nearest unfound creature gently pulses to nudge them toward it.
-// Disabled once the spotlight is moving again. Improves accessibility
-// for younger players (PRD §UI/UX).
-//
-// v1 UAT fixes (see docs/v1-uat-findings.md):
-//   * All emoji replaced with inline SVG (font fallback was rendering
-//     missing-glyph boxes on iPad / headless chromium).
-//   * Tray buttons promoted to 56 px (kid touch-target minimum) with a
-//     paper ring on unfound slots so kids can count remaining-to-find
-//     even in the dark.
-//   * Count toast became a progress pill: "found / total" + a thin warm
-//     fill bar for at-a-glance progress.
-//   * Find-this chip scales up on touch devices for arm's-length viewing.
+// Polish additions:
+//   * Countdown timer — visible top-right, turns red in the last 20s.
+//     Calls timeUp() when it hits zero.
+//   * FoundBurst — a sparkle ring that expands then fades at the exact
+//     scene position of each creature the moment it's found.
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Spotlight } from './Spotlight';
 import { Creature } from './Creature';
@@ -27,12 +18,147 @@ import { playPing } from '../sound';
 import type { Creature as LevelCreature } from '../levels/levels';
 import { SparkleIcon } from './icons';
 
+// ---------------------------------------------------------------------------
+// FoundBurst — a warm ring + sparkle that expands and fades at the
+// creature's scene-relative position. Renders for 1.2 seconds.
+// ---------------------------------------------------------------------------
+
+interface BurstEntry {
+  id: string;
+  x: number; // fraction 0..1
+  y: number; // fraction 0..1
+  name: string;
+}
+
+function FoundBurst({ bursts }: { bursts: BurstEntry[] }) {
+  return (
+    <>
+      {bursts.map((b) => (
+        <motion.div
+          key={b.id}
+          className="pointer-events-none absolute z-20 flex flex-col items-center gap-1"
+          style={{
+            left: `${b.x * 100}%`,
+            top: `${b.y * 100}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+          initial={{ opacity: 1, scale: 0.4 }}
+          animate={{ opacity: 0, scale: 2.2 }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Expanding warm ring */}
+          <div className="absolute h-20 w-20 rounded-full border-4 border-spotlight-edge/70" />
+          {/* Inner glow disc */}
+          <div className="h-12 w-12 rounded-full bg-spotlight-warm/55 blur-sm" />
+        </motion.div>
+      ))}
+      {/* Name pop labels — separate so they fade slower */}
+      {bursts.map((b) => (
+        <motion.div
+          key={`label-${b.id}`}
+          className="pointer-events-none absolute z-20"
+          style={{
+            left: `${b.x * 100}%`,
+            top: `${b.y * 100}%`,
+            transform: 'translate(-50%, -140%)',
+          }}
+          initial={{ opacity: 0, y: 6, scale: 0.85 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="surface-chrome-strong rounded-full px-3 py-1 text-sm font-bold text-paper shadow-lg whitespace-nowrap">
+            ✦ {b.name}
+          </div>
+        </motion.div>
+      ))}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TimerDisplay — top-right countdown. Red + pulse in the last 20s.
+// ---------------------------------------------------------------------------
+
+function TimerDisplay({ timeLeft, total }: { timeLeft: number; total: number }) {
+  const urgent = timeLeft <= 20;
+  const pct = total === 0 ? 0 : Math.max(0, timeLeft / total);
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  const label = m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+
+  return (
+    <motion.div
+      key={urgent ? 'urgent' : 'normal'}
+      initial={{ scale: urgent ? 1.15 : 1 }}
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+      className={`surface-chrome-strong pointer-events-none absolute top-4 right-4 z-10 safe-top flex flex-col items-center gap-1 rounded-2xl px-4 py-2 shadow-lg min-w-[72px] ${
+        urgent ? 'ring-2 ring-red-400/70' : ''
+      }`}
+    >
+      <span
+        className={`font-display text-[1.333rem] font-bold tabular-nums ${
+          urgent ? 'text-red-400' : 'text-spotlight-edge'
+        }`}
+      >
+        {label}
+      </span>
+      {/* Depleting wick bar */}
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-paper/15">
+        <motion.div
+          className={`h-full rounded-full ${urgent ? 'bg-red-400' : 'bg-spotlight-edge'}`}
+          animate={{ width: `${pct * 100}%` }}
+          transition={{ duration: 0.8, ease: 'linear' }}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scene
+// ---------------------------------------------------------------------------
+
 export function Scene() {
   const level = useGame((s) => s.level());
   const found = useGame((s) => s.found);
   const remaining = useGame((s) => s.remaining());
   const markFound = useGame((s) => s.markFound);
+  const timeUp = useGame((s) => s.timeUp);
+  const phase = useGame((s) => s.phase);
 
+  // ── Countdown timer — only runs while phase === 'playing' ───────────────
+  const [timeLeft, setTimeLeft] = useState(level.timeLimit);
+
+  // Reset when the level changes or when we go back to tutorial
+  useEffect(() => {
+    setTimeLeft(level.timeLimit);
+  }, [level.id, level.timeLimit]);
+
+  useEffect(() => {
+    if (phase !== 'playing') return;
+    if (timeLeft <= 0) {
+      timeUp();
+      return;
+    }
+    const id = window.setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          window.clearInterval(id);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [timeLeft, timeUp, phase]);
+
+  // ── Found bursts ─────────────────────────────────────────────────────────
+  const [bursts, setBursts] = useState<BurstEntry[]>([]);
+  const burstTimeout = useRef<Map<string, number>>(new Map());
+
+  // ── Idle hint ─────────────────────────────────────────────────────────────
   const [hintFor, setHintFor] = useState<string | null>(null);
   const idleTimer = useRef<number | null>(null);
   const surfaceWrapRef = useRef<HTMLDivElement>(null);
@@ -41,7 +167,6 @@ export function Scene() {
     setHintFor(null);
     if (idleTimer.current) window.clearTimeout(idleTimer.current);
     idleTimer.current = window.setTimeout(() => {
-      // Hint the first unfound creature in left-to-right reading order.
       const next = level.creatures.find((c) => !found.has(c.id));
       if (next) setHintFor(next.id);
     }, 1600);
@@ -55,20 +180,38 @@ export function Scene() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level.id, found]);
 
-  function onReveal(creatureId: string) {
-    if (found.has(creatureId)) return;
-    markFound(creatureId);
-    playPing();
-    // light haptic on supported devices
-    if ('vibrate' in navigator) navigator.vibrate?.(12);
-  }
+  const onReveal = useCallback(
+    (creatureId: string) => {
+      if (found.has(creatureId)) return;
+      markFound(creatureId);
+      playPing();
+      if ('vibrate' in navigator) navigator.vibrate?.(12);
+
+      // Trigger a burst at the creature's scene position
+      const c = level.creatures.find((cr) => cr.id === creatureId);
+      if (c) {
+        const burstId = `${creatureId}-${Date.now()}`;
+        setBursts((prev) => [...prev, { id: burstId, x: c.x, y: c.y, name: c.name }]);
+        // Remove after animation completes
+        const tid = window.setTimeout(() => {
+          setBursts((prev) => prev.filter((b) => b.id !== burstId));
+          burstTimeout.current.delete(burstId);
+        }, 1300);
+        burstTimeout.current.set(burstId, tid);
+      }
+    },
+    [found, markFound, level.creatures]
+  );
+
+  // Cleanup burst timers on unmount
+  useEffect(() => {
+    return () => {
+      burstTimeout.current.forEach((tid) => window.clearTimeout(tid));
+    };
+  }, []);
 
   const total = level.creatures.length;
   const foundCount = total - remaining;
-  // Active target = the creature shown in the Find-this vignette =
-  // the FIRST unfound creature in level order. Spotlight collision is
-  // gated on this id so panning past other unfound creatures does NOT
-  // accidentally mark them.
   const activeTarget = level.creatures.find((c) => !found.has(c.id));
 
   return (
@@ -87,18 +230,8 @@ export function Scene() {
       >
         <SceneBackground scene={level.scene} />
 
-        {/* Creatures are PAINTED INTO the scene (composited via Higgsfield —
-            see docs/v1-compositing.md). We only render INVISIBLE hit-zones
-            for spotlight collision; no overlay pills, no sprite, no labels
-            on the scene itself. The "what to look for" cue lives in the
-            floating <TargetVignette> chip in the corner. data-testid kept
-            for E2E. */}
         {level.creatures.map((c) => {
           const isFound = found.has(c.id);
-          // hintFor would normally drive an animated glow; v1 UAT removed
-          // anchored visual markers entirely (bbox imprecision made them
-          // feel like wrong-place ovals). Hint now lives in the
-          // TargetVignette chip pulse only.
           void hintFor;
           return (
             <div
@@ -113,46 +246,33 @@ export function Scene() {
               }}
               data-testid={`creature-${c.id}`}
               data-found={isFound ? 'true' : 'false'}
-            >
-              {/* No visible marker on the painted creature itself — the
-                  bbox detection is ~70-80% accurate so any anchored ring
-                  reads as a wrong-place oval per UAT. Reveal feedback now
-                  lives entirely in: the spotlight beam (it brightens the
-                  area where the kid found something), the ProgressPill
-                  count tick, the ping sound, and haptic vibration. */}
-            </div>
+            />
           );
         })}
+
+        {/* Found burst animations — rendered inside the spotlight surface
+            so they sit in the correct coordinate space */}
+        <AnimatePresence>
+          <FoundBurst bursts={bursts} />
+        </AnimatePresence>
       </Spotlight>
 
-      {/* HUD — top corners. */}
+      {/* HUD — title top-left, timer top-right */}
       <SceneHud title={level.title} />
+      <TimerDisplay timeLeft={timeLeft} total={level.timeLimit} />
 
-      {/* "Find this!" floating vignette — shows the next creature the kid
-          should hunt. Replaces the per-creature name pills which were
-          inaccurate (bbox detection ~50%) and visually noisy. */}
+      {/* "Find this!" target vignette */}
       <TargetVignette creatures={level.creatures} found={found} />
 
-      {/* Remaining icons — bottom-right. */}
+      {/* Remaining tray — bottom-right */}
       <RemainingTray creatures={level.creatures} found={found} />
 
-      {/* Progress pill — top-centre. Now shows "X / Y" plus a fill bar so
-          kids can see momentum. */}
+      {/* Progress pill — top-centre */}
       <ProgressPill found={foundCount} total={total} />
     </div>
   );
 }
 
-/**
- * "Find this!" floating chip showing the next unfound creature. Sits
- * top-left under the level title (large enough for kids to read at a
- * glance, small enough not to obscure gameplay). Auto-advances when
- * the current target is found. Uses AnimatePresence to fade-and-spring
- * the swap so the moment the kid finds one, the next target arrives
- * with a satisfying flourish.
- *
- * Touch-device sizing: ~120 px so it's legible at arm's length on iPad.
- */
 function TargetVignette({
   creatures,
   found,
@@ -173,13 +293,10 @@ function TargetVignette({
             transition={{ type: 'spring', stiffness: 200, damping: 28 }}
             className="flex flex-col items-center gap-1.5"
           >
-            {/* "Find this" caps label — solid lantern surface, no alpha-95
-                glassmorphism. Caps tracking 18% per impeccable. */}
             <div className="rounded-full bg-spotlight-edge px-3 py-0.5 text-[0.75rem] font-bold uppercase tracking-[0.18em] text-night-deep shadow-md">
               Find this
             </div>
             <div className="surface-card relative h-28 w-28 rounded-3xl p-1.5 shadow-2xl sm:h-24 sm:w-24">
-              {/* Warm halo behind — the lantern flame quietly breathing. */}
               <div className="absolute inset-0 -z-10 rounded-3xl bg-spotlight-warm/40 blur-xl animate-pulse-soft" />
               <Creature kind={target.kind} found />
             </div>
@@ -207,9 +324,6 @@ function TargetVignette({
 function SceneHud({ title }: { title: string }) {
   return (
     <div className="pointer-events-none absolute top-3 left-4 right-4 flex items-start justify-between safe-top z-10">
-      {/* Title plate — solid warm-tinted-night surface, no backdrop-blur
-          glassmorphism (banned-pattern fix). Demoted to <h2> because there
-          is already an <h1> on the page in the tutorial; one h1 per page. */}
       <div className="surface-chrome-strong rounded-2xl px-4 py-1.5 shadow-lg">
         <h2 className="font-display text-[1.333rem] font-semibold text-paper tracking-[-0.005em]">
           {title}
@@ -223,8 +337,6 @@ function ProgressPill({ found, total }: { found: number; total: number }) {
   const remaining = total - found;
   const pct = total === 0 ? 0 : Math.round((found / total) * 100);
   const allDone = remaining === 0;
-  // Hold the pill at a stable min-width so the trailing copy
-  // ("all found" / "one to go" / "found") doesn't jitter the layout.
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -247,8 +359,6 @@ function ProgressPill({ found, total }: { found: number; total: number }) {
             {allDone ? 'all found' : remaining === 1 ? 'one to go' : 'found'}
           </span>
         </div>
-        {/* Progress wick — burns down warm. Solid lantern colour, no rainbow
-            gradient. Easing matches the project's ease-entry token. */}
         <div className="h-1.5 w-32 overflow-hidden rounded-full bg-paper/15">
           <motion.div
             className="h-full rounded-full bg-spotlight-edge"
@@ -262,15 +372,6 @@ function ProgressPill({ found, total }: { found: number; total: number }) {
   );
 }
 
-/**
- * Bottom-right tray of creature slots. Scales gracefully:
- *   * 7–9 creatures → single row on desktop / iPad landscape, wraps to a
- *     balanced 2-row grid on iPad portrait.
- *   * Up to ~13 creatures → grid clamps at 8 columns (CSS-grid `auto-fill`)
- *     so there's never a stray orphan icon on a half-empty second row.
- *   * Each slot is 56 px (kid touch-target floor); unfound slots show an
- *     outline so kids can count remaining slots even in the dark.
- */
 function RemainingTray({
   creatures,
   found,
@@ -278,8 +379,6 @@ function RemainingTray({
   creatures: LevelCreature[];
   found: Set<string>;
 }) {
-  // Choose column count so 7–9 fits in one row on wide viewports but
-  // wraps cleanly on portrait.
   const cols = Math.min(creatures.length, 9);
   return (
     <div
@@ -306,8 +405,6 @@ function RemainingTray({
               aria-label={isFound ? c.name : 'hidden'}
               title={isFound ? c.name : 'hidden'}
             >
-              {/* Found check-glow — soft warm halo so the kid feels rewarded
-                  every time their eye scans the tray. */}
               {isFound && (
                 <div className="pointer-events-none absolute inset-0 rounded-2xl bg-spotlight-warm/18" />
               )}

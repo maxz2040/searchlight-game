@@ -13,16 +13,19 @@ interface GameState {
   found: Set<string>;
   startedAt: number | null;
   completedAt: number | null;
+  timeExpired: boolean;
 
   // Derived selectors
   level(): Level;
   remaining(): number;
   elapsedMs(): number;
+  stars(): number;
 
   // Actions
   start(): void;
   beginPlaying(): void;
   markFound(creatureId: string): void;
+  timeUp(): void;
   selectLevel(id: string): void;
   replay(): void;
   next(): void;
@@ -34,6 +37,7 @@ export const useGame = create<GameState>((set, get) => ({
   found: new Set<string>(),
   startedAt: null,
   completedAt: null,
+  timeExpired: false,
 
   level() {
     const id = get().levelId;
@@ -50,6 +54,18 @@ export const useGame = create<GameState>((set, get) => ({
     if (!startedAt) return 0;
     return (completedAt ?? Date.now()) - startedAt;
   },
+  stars() {
+    const { startedAt, completedAt, levelId, timeExpired } = get();
+    if (timeExpired) return 1;
+    if (!startedAt || !completedAt) return 0;
+    const level = getLevel(levelId);
+    if (!level) return 1;
+    const elapsedSec = (completedAt - startedAt) / 1000;
+    const ratio = elapsedSec / level.timeLimit;
+    if (ratio <= 0.4) return 3;
+    if (ratio <= 0.7) return 2;
+    return 1;
+  },
 
   start() {
     set({ phase: 'tutorial' });
@@ -58,13 +74,11 @@ export const useGame = create<GameState>((set, get) => ({
     const { levelId } = get();
     const level = getLevel(levelId);
     const now = Date.now();
-    // Degenerate level (no creatures) — auto-complete instead of leaving
-    // the kid stranded on an empty scene with a "0 / 0 found" pill.
     if (level && level.creatures.length === 0) {
-      set({ phase: 'complete', startedAt: now, completedAt: now });
+      set({ phase: 'complete', startedAt: now, completedAt: now, timeExpired: false });
       return;
     }
-    set({ phase: 'playing', startedAt: now, completedAt: null });
+    set({ phase: 'playing', startedAt: now, completedAt: null, timeExpired: false });
   },
   markFound(creatureId: string) {
     const { found, levelId } = get();
@@ -80,6 +94,11 @@ export const useGame = create<GameState>((set, get) => ({
         : {}),
     });
   },
+  timeUp() {
+    const { phase } = get();
+    if (phase !== 'playing') return;
+    set({ phase: 'complete', completedAt: Date.now(), timeExpired: true });
+  },
   selectLevel(id: string) {
     set({
       levelId: id,
@@ -87,6 +106,7 @@ export const useGame = create<GameState>((set, get) => ({
       phase: 'tutorial',
       startedAt: null,
       completedAt: null,
+      timeExpired: false,
     });
   },
   replay() {
@@ -97,19 +117,20 @@ export const useGame = create<GameState>((set, get) => ({
       phase: 'tutorial',
       startedAt: null,
       completedAt: null,
+      timeExpired: false,
     });
   },
   next() {
     const { levelId } = get();
     const nxt = nextLevelId(levelId);
     if (!nxt) {
-      // Loop back to first level — kid-friendly, never a dead-end.
       set({
         levelId: LEVELS[0].id,
         found: new Set(),
         phase: 'tutorial',
         startedAt: null,
         completedAt: null,
+        timeExpired: false,
       });
       return;
     }
@@ -119,6 +140,7 @@ export const useGame = create<GameState>((set, get) => ({
       phase: 'tutorial',
       startedAt: null,
       completedAt: null,
+      timeExpired: false,
     });
   },
 }));

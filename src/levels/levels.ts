@@ -40,6 +40,8 @@ export interface Level {
   scene: SceneKind;
   /** Spotlight radius as fraction of play surface min(w, h). */
   spotlight: number;
+  /** Time limit in seconds for the level. */
+  timeLimit: number;
   creatures: Creature[];
 }
 
@@ -49,6 +51,7 @@ export const LEVELS: Level[] = [
     title: 'Whispering Forest',
     scene: 'forest',
     spotlight: 0.16,
+    timeLimit: 120,
     creatures: [
       { id: 'c1', kind: 'leaf-pup', x: 0.105, y: 0.605, w: 0.105, h: 0.19, name: 'Leafu' },
       { id: 'c2', kind: 'leaf-pup', x: 0.205, y: 0.7, w: 0.115, h: 0.11, name: 'Sprout' },
@@ -66,6 +69,7 @@ export const LEVELS: Level[] = [
     title: 'Meadow at Dusk',
     scene: 'meadow',
     spotlight: 0.16,
+    timeLimit: 100,
     creatures: [
       { id: 'c1', kind: 'pebble-pal', x: 0.08, y: 0.555, w: 0.075, h: 0.15, name: 'Roxxo' },
       { id: 'c2', kind: 'puff-bird', x: 0.205, y: 0.7, w: 0.09, h: 0.18, name: 'Puffi' },
@@ -82,6 +86,7 @@ export const LEVELS: Level[] = [
     title: 'Starlit Shore',
     scene: 'beach',
     spotlight: 0.16,
+    timeLimit: 90,
     creatures: [
       { id: 'c1', kind: 'star-fish', x: 0.13, y: 0.7, w: 0.11, h: 0.27, name: 'Twinkli' },
       { id: 'c2', kind: 'aqua-spark', x: 0.345, y: 0.58, w: 0.09, h: 0.25, name: 'Splashu' },
