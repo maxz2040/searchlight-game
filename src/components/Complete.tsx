@@ -1,10 +1,12 @@
-// Level complete screen. Shows star rating + time-to-complete + a row
-// of all the creatures the player found, plus replay/next buttons.
+// Level complete screen. Star rating + creature gallery + replay / next.
 //
-// Stars are awarded based on how quickly the player completed:
-//   3 stars — finished in ≤40% of the time limit (fast)
-//   2 stars — finished in ≤70% of the time limit (good)
-//   1 star  — finished in any remaining time, or time expired
+// Visual uplift v3:
+//   * Stars are significantly larger (h-14 w-14 / 56px) with a richer SVG shape.
+//   * Ambient sparkle particles drift behind the card.
+//   * Background has a warm radial celebration glow.
+//   * Creature gallery cards are larger with better padding.
+//   * "Time's up!" state has a distinct red glow instead of the amber celebration.
+//   * "Let's begin" / CTA button uses the shimmer-sweep keyframe.
 
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
@@ -26,39 +28,66 @@ function formatMs(ms: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-function StarRating({ stars }: { stars: number }) {
+// Deterministic sparkle positions for the Complete background.
+const SPARKLES = [
+  { x:  7, y: 12, s: 3, d: 3.4, delay: 0.0  },
+  { x: 21, y: 80, s: 2, d: 4.0, delay: 0.7  },
+  { x: 40, y:  8, s: 4, d: 3.7, delay: 1.4  },
+  { x: 57, y: 84, s: 2, d: 2.8, delay: 0.2  },
+  { x: 73, y: 20, s: 3, d: 4.5, delay: 1.0  },
+  { x: 88, y: 62, s: 2, d: 3.2, delay: 0.6  },
+  { x: 14, y: 52, s: 2, d: 3.9, delay: 1.8  },
+  { x: 65, y: 44, s: 3, d: 2.9, delay: 0.9  },
+  { x: 80, y: 88, s: 2, d: 4.2, delay: 0.15 },
+  { x: 34, y: 30, s: 2, d: 3.6, delay: 1.3  },
+  { x: 93, y: 35, s: 3, d: 3.0, delay: 0.5  },
+  { x: 28, y: 68, s: 2, d: 4.1, delay: 1.6  },
+];
+
+// ---------------------------------------------------------------------------
+// Star rating — large warm amber stars.
+// ---------------------------------------------------------------------------
+
+function StarRating({ stars, timeExpired }: { stars: number; timeExpired: boolean }) {
   return (
-    <div className="flex items-center gap-2" aria-label={`${stars} out of 3 stars`}>
+    <div className="flex items-center gap-3" aria-label={`${stars} out of 3 stars`}>
       {[1, 2, 3].map((n) => (
         <motion.div
           key={n}
-          initial={{ scale: 0, rotate: -20 }}
+          initial={{ scale: 0, rotate: -24 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{
-            delay: 0.55 + n * 0.12,
+            delay: 0.52 + n * 0.14,
             type: 'spring',
             stiffness: 280,
-            damping: 20,
+            damping: 18,
           }}
         >
-          <svg viewBox="0 0 32 32" className="h-10 w-10 drop-shadow-md">
+          <svg viewBox="0 0 40 40" className="h-14 w-14 drop-shadow-lg">
             {n <= stars ? (
-              // Filled star — warm amber
+              // Filled star — warm amber gradient
               // sRGB hex: oklch(82% 0.16 72)→#d4a73c  oklch(64% 0.16 58)→#a07828
-              <path
-                d="M16 3 L19.6 11.8 L29 12.9 L22.5 19.2 L24.3 28.5 L16 24 L7.7 28.5 L9.5 19.2 L3 12.9 L12.4 11.8 Z"
-                fill="#d4a73c"
-                stroke="#a07828"
-                strokeWidth="1"
-                strokeLinejoin="round"
-              />
+              <>
+                <defs>
+                  <linearGradient id={`sg-${n}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#f8eedd" />
+                    <stop offset="100%" stopColor="#d4a73c" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M20 3.5 L24.5 14.5 L36.5 16 L27.5 24.5 L29.5 36.5 L20 30.5 L10.5 36.5 L12.5 24.5 L3.5 16 L15.5 14.5 Z"
+                  fill={`url(#sg-${n})`}
+                  stroke="#a07828"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              </>
             ) : (
-              // Empty star — dim outline
-              // sRGB: oklch(96% 0.018 80 / 0.3) → rgba(245,238,222,0.3)
+              // Empty star — subtle dim outline
               <path
-                d="M16 3 L19.6 11.8 L29 12.9 L22.5 19.2 L24.3 28.5 L16 24 L7.7 28.5 L9.5 19.2 L3 12.9 L12.4 11.8 Z"
-                fill="none"
-                stroke="rgba(245,238,222,0.3)"
+                d="M20 3.5 L24.5 14.5 L36.5 16 L27.5 24.5 L29.5 36.5 L20 30.5 L10.5 36.5 L12.5 24.5 L3.5 16 L15.5 14.5 Z"
+                fill={timeExpired ? 'rgba(248,113,113,0.12)' : 'rgba(245,238,222,0.08)'}
+                stroke={timeExpired ? 'rgba(248,113,113,0.35)' : 'rgba(245,238,222,0.28)'}
                 strokeWidth="1.5"
                 strokeLinejoin="round"
               />
@@ -70,16 +99,22 @@ function StarRating({ stars }: { stars: number }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Complete
+// ---------------------------------------------------------------------------
+
 export function Complete() {
-  const level = useGame((s) => s.level());
-  const elapsed = useGame((s) => s.elapsedMs());
-  const stars = useGame((s) => s.stars());
+  const level       = useGame((s) => s.level());
+  const elapsed     = useGame((s) => s.elapsedMs());
+  const stars       = useGame((s) => s.stars());
   const timeExpired = useGame((s) => s.timeExpired);
-  const replay = useGame((s) => s.replay);
-  const next = useGame((s) => s.next);
+  const replay      = useGame((s) => s.replay);
+  const next        = useGame((s) => s.next);
 
   const videoUrl = VIDEO_URL[level.id];
-  const [phase, setPhase] = useState<'video' | 'card'>(videoUrl && !timeExpired ? 'video' : 'card');
+  const [phase, setPhase] = useState<'video' | 'card'>(
+    videoUrl && !timeExpired ? 'video' : 'card',
+  );
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -92,11 +127,12 @@ export function Complete() {
     return () => window.clearTimeout(fallback);
   }, [phase]);
 
-  const headline = timeExpired ? "Time's up!" : 'You found them all';
-  const subline = timeExpired
-    ? `${level.title} · keep trying!`
+  const headline = timeExpired ? "Time's up!" : 'You found them all!';
+  const subline  = timeExpired
+    ? `${level.title} · try again!`
     : `${level.title} · ${formatMs(elapsed)}`;
 
+  // ── Video phase ────────────────────────────────────────────────────────
   if (phase === 'video' && videoUrl) {
     return (
       <motion.div
@@ -119,13 +155,13 @@ export function Complete() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-          className="surface-chrome-strong absolute top-8 left-1/2 -translate-x-1/2 rounded-full px-6 py-2 text-paper font-display text-[1.778rem] font-semibold safe-top shadow-2xl"
+          className="surface-chrome-strong absolute top-8 left-1/2 -translate-x-1/2 rounded-full px-7 py-2.5 text-paper font-display text-[1.778rem] font-semibold safe-top shadow-2xl"
         >
-          You found them all
+          You found them all!
         </motion.div>
         <button
           onClick={() => setPhase('card')}
-          className="absolute bottom-6 right-6 inline-flex min-h-[48px] min-w-[88px] items-center justify-center gap-1.5 rounded-full bg-accent px-5 py-2 text-base font-semibold text-paper shadow-lg active:scale-95 transition-transform safe-bottom"
+          className="absolute bottom-6 right-6 inline-flex min-h-[52px] min-w-[96px] items-center justify-center gap-1.5 rounded-full bg-accent px-6 py-2.5 text-base font-bold text-paper shadow-lg active:scale-95 transition-transform safe-bottom"
         >
           Skip
           <PlayIcon className="h-4 w-4" />
@@ -134,96 +170,151 @@ export function Complete() {
     );
   }
 
+  // ── Card phase ─────────────────────────────────────────────────────────
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-      className="surface-overlay absolute inset-0 z-30 flex flex-col items-center justify-center backdrop-blur-sm safe-bottom safe-top overflow-y-auto py-10"
+      transition={{ duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+      className="surface-overlay absolute inset-0 z-30 flex flex-col items-center justify-center overflow-hidden safe-bottom safe-top py-8"
     >
-      <div className="flex max-w-md flex-col items-center gap-5 px-6 text-center">
+      {/* Ambient sparkle particles */}
+      {SPARKLES.map((p, i) => (
+        <div
+          key={i}
+          className={`absolute rounded-full animate-float-particle pointer-events-none ${
+            timeExpired ? 'bg-red-400/60' : 'bg-spotlight-warm'
+          }`}
+          style={{
+            left: `${p.x}%`,
+            top:  `${p.y}%`,
+            width:  p.s,
+            height: p.s,
+            '--dur': `${p.d}s`,
+            animationDelay: `${p.delay}s`,
+          } as React.CSSProperties}
+        />
+      ))}
+
+      {/* Background celebration radial glow */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: timeExpired
+            ? 'radial-gradient(ellipse 60% 50% at 50% 42%, rgba(248,113,113,0.10) 0%, transparent 70%)'
+            : 'radial-gradient(ellipse 60% 50% at 50% 42%, rgba(212,167,60,0.14) 0%, transparent 70%)',
+        }}
+      />
+
+      <div className="relative z-10 flex max-w-lg w-full flex-col items-center gap-5 px-6 text-center overflow-y-auto">
+
+        {/* Trophy icon */}
         <motion.div
-          initial={{ scale: 0.84, opacity: 0 }}
+          initial={{ scale: 0.80, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 28 }}
-          className="relative h-20 w-20"
+          transition={{ type: 'spring', stiffness: 200, damping: 26 }}
+          className="relative h-24 w-24"
         >
-          <div className="absolute inset-[-15%] rounded-full bg-spotlight-warm/35 blur-3xl animate-pulse-soft" />
-          <div className="absolute inset-[-5%] rounded-full bg-spotlight-warm/45 blur-2xl" />
+          <div
+            className={`absolute inset-[-18%] rounded-full blur-3xl animate-pulse-soft ${
+              timeExpired ? 'bg-red-400/30' : 'bg-spotlight-warm/38'
+            }`}
+          />
+          <div
+            className={`absolute inset-[-6%] rounded-full blur-2xl ${
+              timeExpired ? 'bg-red-400/30' : 'bg-spotlight-warm/48'
+            }`}
+          />
           <ConfettiIcon className="relative h-full w-full drop-shadow-2xl" />
         </motion.div>
 
         {/* Star rating */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.88 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay: 0.38, duration: 0.36, ease: [0.16, 1, 0.3, 1] }}
         >
-          <StarRating stars={stars} />
+          <StarRating stars={stars} timeExpired={timeExpired} />
         </motion.div>
 
+        {/* Headline */}
         <motion.h2
-          initial={{ y: 10, opacity: 0 }}
+          initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.16, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-          className="font-display text-[2.369rem] font-semibold text-paper leading-[1.1]"
+          transition={{ delay: 0.14, duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+          className={`font-display text-[2.6rem] font-bold leading-[1.06] ${
+            timeExpired ? 'text-red-300' : 'text-paper'
+          }`}
         >
           {headline}
         </motion.h2>
+
+        {/* Subline */}
         <motion.p
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.24, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[1.0625rem] text-paper/80 tabular-nums"
+          transition={{ delay: 0.22, duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+          className="text-[1.0625rem] text-paper/75 tabular-nums"
         >
           {subline}
         </motion.p>
 
+        {/* Creature gallery */}
         <motion.div
-          initial={{ y: 10, opacity: 0 }}
+          initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.34, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-          className="surface-chrome-strong grid grid-cols-5 gap-3 rounded-2xl p-4 shadow-xl"
+          transition={{ delay: 0.32, duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+          className="surface-chrome-strong grid grid-cols-5 gap-3 rounded-3xl p-4 shadow-xl"
         >
           {level.creatures.map((c, i) => (
             <motion.div
               key={c.id}
-              initial={{ scale: 0.6, opacity: 0 }}
+              initial={{ scale: 0.55, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{
-                delay: 0.5 + i * 0.05,
+                delay: 0.48 + i * 0.055,
                 type: 'spring',
-                stiffness: 200,
-                damping: 28,
+                stiffness: 260,
+                damping: 24,
               }}
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-1.5"
             >
-              <div className="surface-card h-14 w-14 rounded-2xl p-1 shadow-md">
+              <div className="surface-card h-16 w-16 rounded-2xl p-1.5 shadow-md ring-1 ring-spotlight-warm/30">
                 <Creature kind={c.kind} found />
               </div>
-              <div className="text-xs font-semibold text-paper/85">{c.name}</div>
+              <div className="text-xs font-bold text-paper/80 leading-tight">{c.name}</div>
             </motion.div>
           ))}
         </motion.div>
 
+        {/* Action buttons */}
         <motion.div
-          initial={{ y: 10, opacity: 0 }}
+          initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.78, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-2 flex flex-wrap items-center justify-center gap-3"
+          transition={{ delay: 0.76, duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-1 flex flex-wrap items-center justify-center gap-3"
         >
           <button
             onClick={replay}
-            className="surface-chrome min-h-[56px] min-w-[140px] rounded-full px-6 py-3 text-lg font-semibold text-paper active:scale-95 transition-transform duration-[120ms]"
+            className="surface-chrome min-h-[60px] min-w-[148px] rounded-full px-7 py-3 text-lg font-bold text-paper active:scale-95 transition-transform duration-[120ms] shadow-md"
           >
             Play again
           </button>
           <button
             onClick={next}
-            className="inline-flex min-h-[56px] min-w-[140px] items-center justify-center gap-1.5 rounded-full bg-accent px-6 py-3 text-lg font-semibold text-paper shadow-lg active:scale-95 transition-transform duration-[120ms]"
+            className="relative inline-flex min-h-[60px] min-w-[148px] items-center justify-center gap-2 overflow-hidden rounded-full bg-accent px-7 py-3 text-lg font-bold text-paper shadow-[0_4px_20px_rgba(160,120,40,0.45)] active:scale-95 transition-transform duration-[120ms]"
           >
-            Next level
-            <ArrowRightIcon className="h-5 w-5" />
+            {/* Shimmer sweep */}
+            <span
+              className="pointer-events-none absolute inset-0 rounded-full"
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(255,248,210,0.28) 50%, transparent 100%)',
+                animation: 'shimmer-sweep 2.4s ease-in-out infinite',
+              }}
+            />
+            <span className="relative">Next level</span>
+            <ArrowRightIcon className="relative h-5 w-5" />
           </button>
         </motion.div>
       </div>

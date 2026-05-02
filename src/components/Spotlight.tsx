@@ -86,12 +86,15 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     const cx = x.get();
     const cy = y.get();
     const r  = radiusPx.get();
+    // Warmer, more magical lantern gradient:
+    //   transparent core → warm amber spill at beam edge → deep midnight
     el.style.background =
       `radial-gradient(circle ${r}px at ${cx}px ${cy}px, ` +
-      `rgba(255, 244, 200, 0) 0%, `      +
-      `rgba(255, 208, 112, 0.04) 60%, `  +
-      `rgba(10, 13, 31, 0.85) 75%, `     +
-      `rgba(5, 7, 20, 0.96) 100%)`;
+      `rgba(255, 248, 215, 0) 0%, `        +  // crystal-clear centre
+      `rgba(255, 222, 130, 0.07) 52%, `    +  // warm amber halo
+      `rgba(255, 160, 50, 0.04) 66%, `     +  // orange flame edge
+      `rgba(8, 11, 27, 0.91) 76%, `        +  // night closes in
+      `rgba(3, 5, 18, 0.97) 100%)`;           // maximum darkness
   }
 
   useMotionValueEvent(x,        'change', () => updateGradient());

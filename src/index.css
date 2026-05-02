@@ -1,7 +1,6 @@
 /* Searchlight Edition — global styles.
    Tailwind v4 + OKLCH primitives + semantic tokens.
    Shape brief: docs/impeccable-shape.md (paper-lantern-at-bedtime).
-   Critique log: docs/impeccable-critique.md.
 
    The play surface is no-scroll, full-viewport, touch-action: none. */
 
@@ -9,17 +8,7 @@
 
 /* ---------------------------------------------------------------------------
    @font-face — Fraunces (display, variable serif) + Nunito (body, humanist
-   sans).
-
-   The woff2 files belong in /public/fonts/ (offline-first, avoids Google
-   Fonts dependency on iPad). Until they ship, the metric-matched local
-   fallbacks (Georgia for Fraunces — both have similar x-height + ascender
-   ratios; Verdana for Nunito) are used directly. `size-adjust` /
-   `ascent-override` are tuned so when the woff2 lands the swap is visually
-   undetectable.
-
-   We use ONLY `local()` srcs here so there is no 404 noise in dev/prod.
-   When the woff2 ships, append the url() form with format("woff2-variations").
+   sans). woff2 files in /public/fonts/ for offline-first play.
 */
 @font-face {
   font-family: "Fraunces";
@@ -50,81 +39,53 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Tailwind theme tokens. Names retained from v1/v2 so existing class strings
-   in the components keep working; VALUES rewritten to OKLCH per the impeccable
-   shape brief. Hue chosen: warm-tungsten amber (~70) for the lantern, warm-
-   indigo (~275) for night neutrals (tinted toward the brand across the wheel
-   so warm + cool agree).
-
-   Banned-pattern fixes vs v2:
-   - No pure black on the body surface: --color-night-deep is now a tinted
-     oklch(11% 0.03 275) instead of #050714.
-   - --color-accent moved off hot-pink (#ff6b9d) onto brass (lantern-700) to
-     keep the palette in a single warm hue family (Restrained stance).
-   - --color-paper warmed slightly so it agrees with the tungsten flame.
-   - Display/body fonts: Fraunces (storybook serif) + Nunito (humanist sans)
-     replace the Fredoka + SF Pro Rounded reflex pair.
+   Tailwind theme tokens — OKLCH warm-amber palette.
 */
 @theme {
-  /* Brand primitives — OKLCH, single warm-amber hue family. */
-  --color-night-deep:    oklch(11% 0.03  275);   /* deepest room (was #050714) */
-  --color-night:         oklch(18% 0.035 275);   /* secondary night */
-  --color-spotlight-warm: oklch(96% 0.04  82);   /* lantern-100 — warm core */
-  --color-spotlight-edge: oklch(82% 0.16  72);   /* lantern-500 — flame edge */
-  --color-paper:         oklch(96% 0.018 80);    /* warm ivory */
-  --color-accent:        oklch(64% 0.16  58);    /* lantern-700 — brass CTA */
-  /* Legacy decorative slots retained so SVG/Tailwind references resolve.
-     We deliberately re-tone them into the warm family rather than keeping the
-     v2 rainbow pink/green/blue. The "leaf" and "sky" tokens still exist so
-     callers don't break, but they no longer disagree with the brand. */
-  --color-leaf:          oklch(74% 0.12  92);    /* warm gold-green */
-  --color-sky:           oklch(82% 0.06  72);    /* warm pale amber */
+  --color-night-deep:     oklch(11% 0.03  275);
+  --color-night:          oklch(18% 0.035 275);
+  --color-spotlight-warm: oklch(96% 0.04  82);
+  --color-spotlight-edge: oklch(82% 0.16  72);
+  --color-paper:          oklch(96% 0.018 80);
+  --color-accent:         oklch(64% 0.16  58);
+  --color-leaf:           oklch(74% 0.12  92);
+  --color-sky:            oklch(82% 0.06  72);
 
-  /* Display + body fonts. Fallback chains use the metric-matched fallback
-     declared above so the swap is invisible. */
-  --font-display: "Fraunces", "Fraunces Fallback", Georgia, "Times New Roman",
-                  serif;
+  --font-display: "Fraunces", "Fraunces Fallback", Georgia, "Times New Roman", serif;
   --font-body:    "Nunito",   "Nunito Fallback",   Verdana, system-ui, sans-serif;
 }
 
 /* ---------------------------------------------------------------------------
-   Semantic / motion tokens. Components reference these via `var(--…)` for the
-   handful of cases (motion, focus ring, modular-scale step) where Tailwind
-   utilities aren't enough. Two-layer architecture per the impeccable skill.
+   Semantic / motion tokens.
 */
 :root {
-  /* Modular type scale: 1.333 (perfect fourth). 5 sizes committed. */
-  --text-xs:      0.75rem;    /* 12px */
-  --text-sm:      0.875rem;   /* 14px */
-  --text-base:    1rem;       /* 16px — body floor */
-  --text-lg:      1.333rem;   /* 21.3px */
-  --text-xl:      1.778rem;   /* 28.4px */
-  --text-display: 2.369rem;   /* 37.9px */
+  --text-xs:      0.75rem;
+  --text-sm:      0.875rem;
+  --text-base:    1rem;
+  --text-lg:      1.333rem;
+  --text-xl:      1.778rem;
+  --text-display: 2.369rem;
 
-  /* Motion — bucketed timing + deliberate easings. Bounce/elastic banned. */
   --motion-instant:  120ms;
   --motion-state:    260ms;
   --motion-layout:   420ms;
   --motion-entrance: 640ms;
-  --ease-entry:      cubic-bezier(0.16, 1, 0.3, 1);    /* expo-out */
-  --ease-exit:       cubic-bezier(0.7, 0, 0.84, 0);    /* expo-in */
-  --ease-toggle:     cubic-bezier(0.65, 0, 0.35, 1);   /* expo-in-out */
+  --ease-entry:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit:   cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-toggle: cubic-bezier(0.65, 0, 0.35, 1);
 
-  /* Surface tokens — replace the alpha soup. Components prefer these. */
-  --surface-chrome:        oklch(20% 0.035 275 / 0.78);  /* HUD pills */
-  --surface-chrome-strong: oklch(14% 0.03  275 / 0.92);  /* tray, target */
-  --surface-card:          oklch(96% 0.018 80  / 0.95);  /* found tile */
-  --surface-overlay:       oklch(11% 0.03  275 / 0.92);  /* full-screen overlays */
+  --surface-chrome:        oklch(20% 0.035 275 / 0.82);
+  --surface-chrome-strong: oklch(13% 0.03  275 / 0.94);
+  --surface-card:          oklch(96% 0.018 80  / 0.96);
+  --surface-overlay:       oklch(10% 0.03  275 / 0.94);
   --border-soft:           oklch(96% 0.018 80  / 0.18);
-  --border-mid:            oklch(96% 0.018 80  / 0.28);
-  --border-warm:           oklch(82% 0.16  72  / 0.55);
+  --border-mid:            oklch(96% 0.018 80  / 0.30);
+  --border-warm:           oklch(82% 0.16  72  / 0.60);
 }
 
 /* ---------------------------------------------------------------------------
    Document defaults. */
-html,
-body,
-#root {
+html, body, #root {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -132,137 +93,141 @@ body,
   background: var(--color-night-deep);
   color: var(--color-paper);
   font-family: var(--font-body);
-  font-size: 1rem;          /* 16px floor — never px on body */
-  line-height: 1.5;          /* drives the vertical rhythm */
+  font-size: 1rem;
+  line-height: 1.5;
   font-feature-settings: "ss01", "kern", "liga";
-  font-optical-sizing: auto; /* variable-font picks the right master */
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  /* iPad-friendly: disable double-tap zoom on the game surface */
   touch-action: none;
 }
 
-/* Polish primitives — almost nobody enables these; transformative for kids
-   reading short labels at arm's length. */
 h1, h2, h3 {
   text-wrap: balance;
   font-family: var(--font-display);
   font-optical-sizing: auto;
   letter-spacing: -0.005em;
 }
-p {
-  text-wrap: pretty;
-}
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
+p { text-wrap: pretty; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
-/* The play surface MUST receive every touch/pointer event without
-   the browser hijacking for scroll/zoom. */
 .play-surface {
   touch-action: none;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Mobile-first: place primary action buttons in the lower third for
-   thumb reachability — see PRD UI/UX guidelines. */
 @layer utilities {
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
   .safe-top    { padding-top: env(safe-area-inset-top, 0); }
 
-  /* Semantic surface helpers used in hot-path HUD elements. Avoids the
-     bg-night/55 + ring-paper/15 + backdrop-blur stack ("alpha soup"). */
   .surface-chrome        { background: var(--surface-chrome);        }
   .surface-chrome-strong { background: var(--surface-chrome-strong); }
   .surface-card          { background: var(--surface-card);          }
   .surface-overlay       { background: var(--surface-overlay);       }
 
-  /* Backdrop blur — explicit -webkit- prefix for Safari < 16 where the
-     unprefixed property is not supported. Tailwind's backdrop-blur-sm
-     utility outputs both, but these bespoke classes don't go through
-     the same pipeline, so we add it explicitly here. */
+  /* Explicit webkit prefix for Safari < 16 */
   .surface-overlay,
   .surface-chrome,
   .surface-chrome-strong {
-    -webkit-backdrop-filter: blur(8px);
-            backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
   }
 }
 
-/* Keyboard focus ring — visible only for keyboard nav. Default browser ring
-   suppressed in favour of a deliberate warm-amber ring matching the brand. */
+/* sRGB hex: oklch(82% 0.16 72) ≈ #d4a73c */
 :focus-visible {
-  outline: 2px solid oklch(82% 0.16 72);   /* lantern flame */
+  outline: 2px solid #d4a73c;
   outline-offset: 3px;
   border-radius: 9999px;
 }
-button:focus-visible {
-  outline-offset: 4px;
-}
+button:focus-visible { outline-offset: 4px; }
 
 /* ---------------------------------------------------------------------------
-   Animations. Bounce/elastic easings BANNED — replaced with expo-out so the
-   motion still feels alive without overshoot. */
+   Animations — world-class kids-game motion vocabulary. */
+
+/* Gentle breathing pulse for lantern halos and glows */
 @keyframes pulse-soft {
-  0%, 100% { opacity: 0.85; transform: scale(1); }
-  50%      { opacity: 1;    transform: scale(1.04); }
+  0%, 100% { opacity: 0.80; transform: scale(1);    }
+  50%      { opacity: 1;    transform: scale(1.07); }
 }
 .animate-pulse-soft {
-  animation: pulse-soft 2.4s var(--ease-toggle) infinite;
+  animation: pulse-soft 2.2s var(--ease-toggle) infinite;
 }
 
+/* Idle hint shimmer */
 @keyframes hint-pulse {
-  0%, 100% { transform: scale(1);   opacity: 0; }
+  0%, 100% { transform: scale(1);   opacity: 0;    }
   50%      { transform: scale(1.5); opacity: 0.55; }
 }
 .animate-hint-pulse {
   animation: hint-pulse 1.8s var(--ease-toggle) infinite;
 }
 
-@keyframes reveal-pop {
-  0%   { transform: scale(0.7); opacity: 0; }
-  100% { transform: scale(1);   opacity: 1; }
+/* Ambient sparkle particles — used in Tutorial, Loader, Complete */
+@keyframes float-particle {
+  0%,  100% { transform: translateY(0px)   scale(1);    opacity: 0.22; }
+  35%       { transform: translateY(-22px) scale(1.25); opacity: 0.82; }
+  70%       { transform: translateY(-9px)  scale(0.90); opacity: 0.40; }
 }
-/* Was: cubic-bezier(.34, 1.56, .64, 1) — banned overshoot. Replaced with
-   expo-out so the reveal still feels alive but no longer bounces. */
+.animate-float-particle {
+  animation: float-particle var(--dur, 3.5s) ease-in-out infinite;
+}
+
+/* Creature-found name-label pop */
+@keyframes reveal-pop {
+  0%   { transform: scale(0.65); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
 .animate-reveal-pop {
   animation: reveal-pop var(--motion-entrance) var(--ease-entry) both;
 }
 
-/* The Expressive moment from the shape brief: spotlight bloom on reveal. A
-   soft warm halo blooms around the lantern beam, then settles. Used by the
-   Spotlight component when a creature is found. */
+/* Spotlight bloom on find — whole overlay briefly brightens */
 @keyframes lantern-bloom {
   0%   { filter: brightness(1)    saturate(1);    opacity: 1; }
-  35%  { filter: brightness(1.18) saturate(1.10); opacity: 1; }
+  30%  { filter: brightness(1.24) saturate(1.14); opacity: 1; }
   100% { filter: brightness(1)    saturate(1);    opacity: 1; }
 }
 .animate-lantern-bloom {
   animation: lantern-bloom var(--motion-entrance) var(--ease-toggle) both;
 }
 
+/* Tray slot pop when creature is found */
+@keyframes slot-found {
+  0%   { transform: scale(0.6) rotate(-6deg); opacity: 0; }
+  55%  { transform: scale(1.14) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);    opacity: 1; }
+}
+.animate-slot-found {
+  animation: slot-found 0.52s var(--ease-entry) both;
+}
+
+/* Shimmer sweep — used on CTA buttons */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-130%) skewX(-15deg); }
+  100% { transform: translateX(240%)  skewX(-15deg); }
+}
+
 /* ---------------------------------------------------------------------------
-   Reduced-motion: degrade gracefully (don't strip — vestibular users still
-   benefit from subtle feedback, just no parallax / overshoot / pulse). */
+   Reduced-motion: degrade gracefully. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
   .animate-pulse-soft,
   .animate-hint-pulse,
-  .animate-lantern-bloom {
+  .animate-lantern-bloom,
+  .animate-float-particle {
     animation: none !important;
   }
-  .animate-reveal-pop {
-    /* Keep a fade — vestibular-safe, still telegraphs state change. */
+  .animate-reveal-pop,
+  .animate-slot-found {
     animation: reveal-pop 0.001ms linear both !important;
     opacity: 1 !important;
   }

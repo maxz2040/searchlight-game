@@ -1,12 +1,13 @@
-// Scene composes the background + creatures + spotlight + HUD into a
-// playable level. Owns the per-level state subscription and feeds the
-// Spotlight component its creature list.
+// Scene — composes background + creatures + spotlight + HUD.
 //
-// Polish additions:
-//   * Countdown timer — visible top-right, turns red in the last 20s.
-//     Calls timeUp() when it hits zero.
-//   * FoundBurst — a sparkle ring that expands then fades at the exact
-//     scene position of each creature the moment it's found.
+// Visual uplift v3:
+//   * FoundBurst: 3 concentric expanding rings (warm/amber/brass) + glow core
+//     + name label with spring bounce. Far more celebratory.
+//   * TimerDisplay: 🔥 flame indicator under 10 s; stronger critical pulse.
+//   * TargetVignette: larger creature card (h-32 w-32), bolder "FIND!" pill.
+//   * ProgressPill: stripped to the essential number ratio, spring animation.
+//   * RemainingTray: moved to bottom-centre, slots pop when a creature is found.
+//   * SceneHud: compact level label stays top-left for orientation.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,14 +20,13 @@ import type { Creature as LevelCreature } from '../levels/levels';
 import { SparkleIcon } from './icons';
 
 // ---------------------------------------------------------------------------
-// FoundBurst — a warm ring + sparkle that expands and fades at the
-// creature's scene-relative position. Renders for 1.2 seconds.
+// FoundBurst — 3-ring celebration at the creature's scene position.
 // ---------------------------------------------------------------------------
 
 interface BurstEntry {
   id: string;
-  x: number; // fraction 0..1
-  y: number; // fraction 0..1
+  x: number;
+  y: number;
   name: string;
 }
 
@@ -34,41 +34,68 @@ function FoundBurst({ bursts }: { bursts: BurstEntry[] }) {
   return (
     <>
       {bursts.map((b) => (
-        <motion.div
+        <div
           key={b.id}
-          className="pointer-events-none absolute z-20 flex flex-col items-center gap-1"
+          className="pointer-events-none absolute z-20"
           style={{
             left: `${b.x * 100}%`,
-            top: `${b.y * 100}%`,
+            top:  `${b.y * 100}%`,
             transform: 'translate(-50%, -50%)',
           }}
-          initial={{ opacity: 1, scale: 0.4 }}
-          animate={{ opacity: 0, scale: 2.2 }}
-          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Expanding warm ring */}
-          <div className="absolute h-20 w-20 rounded-full border-4 border-spotlight-edge/70" />
-          {/* Inner glow disc */}
-          <div className="h-12 w-12 rounded-full bg-spotlight-warm/55 blur-sm" />
-        </motion.div>
+          {/* Glow core — immediate warm disc */}
+          <motion.div
+            className="absolute rounded-full bg-spotlight-warm/75 blur-xl"
+            style={{ width: 56, height: 56, marginLeft: -28, marginTop: -28 }}
+            initial={{ opacity: 1, scale: 0.3 }}
+            animate={{ opacity: 0, scale: 2.6 }}
+            transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
+          />
+          {/* Ring 1 — inner warm ivory */}
+          <motion.div
+            className="absolute rounded-full border-[5px] border-spotlight-warm"
+            style={{ width: 60, height: 60, marginLeft: -30, marginTop: -30 }}
+            initial={{ opacity: 0.98, scale: 0.18 }}
+            animate={{ opacity: 0, scale: 3.4 }}
+            transition={{ duration: 0.62, ease: [0.16, 1, 0.3, 1] }}
+          />
+          {/* Ring 2 — mid amber */}
+          <motion.div
+            className="absolute rounded-full border-[4px] border-spotlight-edge"
+            style={{ width: 80, height: 80, marginLeft: -40, marginTop: -40 }}
+            initial={{ opacity: 0.82, scale: 0.18 }}
+            animate={{ opacity: 0, scale: 3.1 }}
+            transition={{ duration: 0.85, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+          />
+          {/* Ring 3 — outer brass */}
+          <motion.div
+            className="absolute rounded-full border-[3px] border-accent/80"
+            style={{ width: 108, height: 108, marginLeft: -54, marginTop: -54 }}
+            initial={{ opacity: 0.60, scale: 0.18 }}
+            animate={{ opacity: 0, scale: 2.9 }}
+            transition={{ duration: 1.08, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+          />
+        </div>
       ))}
-      {/* Name pop labels — separate so they fade slower */}
+
+      {/* Name labels — spring-bounce in, float up and fade */}
       {bursts.map((b) => (
         <motion.div
           key={`label-${b.id}`}
           className="pointer-events-none absolute z-20"
           style={{
             left: `${b.x * 100}%`,
-            top: `${b.y * 100}%`,
-            transform: 'translate(-50%, -140%)',
+            top:  `${b.y * 100}%`,
+            transform: 'translate(-50%, -175%)',
           }}
-          initial={{ opacity: 0, y: 6, scale: 0.85 }}
+          initial={{ opacity: 0, y: 18, scale: 0.6 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+          exit={{ opacity: 0, y: -10, scale: 0.88 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 24, delay: 0.1 }}
         >
-          <div className="surface-chrome-strong rounded-full px-3 py-1 text-sm font-bold text-paper shadow-lg whitespace-nowrap">
-            ✦ {b.name}
+          <div className="surface-chrome-strong flex items-center gap-1.5 rounded-full px-4 py-1.5 text-base font-bold text-paper shadow-2xl whitespace-nowrap">
+            <SparkleIcon className="h-4 w-4 text-spotlight-edge shrink-0" />
+            {b.name}
           </div>
         </motion.div>
       ))}
@@ -77,39 +104,44 @@ function FoundBurst({ bursts }: { bursts: BurstEntry[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// TimerDisplay — top-right countdown. Red + pulse in the last 20s.
+// TimerDisplay — top-right countdown.
 // ---------------------------------------------------------------------------
 
 function TimerDisplay({ timeLeft, total }: { timeLeft: number; total: number }) {
-  const urgent = timeLeft <= 20;
-  const pct = total === 0 ? 0 : Math.max(0, timeLeft / total);
-  const m = Math.floor(timeLeft / 60);
-  const s = timeLeft % 60;
-  const label = m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+  const urgent   = timeLeft <= 20;
+  const critical = timeLeft <= 10;
+  const pct      = total === 0 ? 0 : Math.max(0, timeLeft / total);
+  const m        = Math.floor(timeLeft / 60);
+  const s        = timeLeft % 60;
+  const label    = m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
 
   return (
     <motion.div
       key={urgent ? 'urgent' : 'normal'}
-      initial={{ scale: urgent ? 1.15 : 1 }}
+      initial={{ scale: urgent ? 1.20 : 1 }}
       animate={{ scale: 1 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-      className={`surface-chrome-strong pointer-events-none absolute top-4 right-4 z-10 safe-top flex flex-col items-center gap-1 rounded-2xl px-4 py-2 shadow-lg min-w-[72px] ${
-        urgent ? 'ring-2 ring-red-400/70' : ''
+      transition={{ type: 'spring', stiffness: 340, damping: 20 }}
+      className={`surface-chrome-strong pointer-events-none absolute top-4 right-4 z-10 safe-top flex flex-col items-center gap-1.5 rounded-2xl px-4 py-2.5 shadow-xl min-w-[76px] ${
+        critical ? 'ring-2 ring-red-400 shadow-[0_0_16px_rgba(248,113,113,0.35)]'
+        : urgent  ? 'ring-2 ring-red-400/60'
+                  : ''
       }`}
     >
-      <span
-        className={`font-display text-[1.333rem] font-bold tabular-nums ${
-          urgent ? 'text-red-400' : 'text-spotlight-edge'
-        }`}
-      >
-        {label}
-      </span>
-      {/* Depleting wick bar */}
+      <div className="flex items-center gap-1.5">
+        {critical && <span aria-hidden>🔥</span>}
+        <span
+          className={`font-display text-[1.333rem] font-bold tabular-nums leading-none ${
+            urgent ? 'text-red-400' : 'text-spotlight-edge'
+          }`}
+        >
+          {label}
+        </span>
+      </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-paper/15">
         <motion.div
           className={`h-full rounded-full ${urgent ? 'bg-red-400' : 'bg-spotlight-edge'}`}
           animate={{ width: `${pct * 100}%` }}
-          transition={{ duration: 0.8, ease: 'linear' }}
+          transition={{ duration: 0.85, ease: 'linear' }}
         />
       </div>
     </motion.div>
@@ -121,33 +153,26 @@ function TimerDisplay({ timeLeft, total }: { timeLeft: number; total: number }) 
 // ---------------------------------------------------------------------------
 
 export function Scene() {
-  const level = useGame((s) => s.level());
-  const found = useGame((s) => s.found);
-  const remaining = useGame((s) => s.remaining());
-  const markFound = useGame((s) => s.markFound);
-  const timeUp = useGame((s) => s.timeUp);
-  const phase = useGame((s) => s.phase);
+  const level      = useGame((s) => s.level());
+  const found      = useGame((s) => s.found);
+  const remaining  = useGame((s) => s.remaining());
+  const markFound  = useGame((s) => s.markFound);
+  const timeUp     = useGame((s) => s.timeUp);
+  const phase      = useGame((s) => s.phase);
 
-  // ── Countdown timer — only runs while phase === 'playing' ───────────────
+  // ── Countdown timer ──────────────────────────────────────────────────────
   const [timeLeft, setTimeLeft] = useState(level.timeLimit);
 
-  // Reset when the level changes or when we go back to tutorial
   useEffect(() => {
     setTimeLeft(level.timeLimit);
   }, [level.id, level.timeLimit]);
 
   useEffect(() => {
     if (phase !== 'playing') return;
-    if (timeLeft <= 0) {
-      timeUp();
-      return;
-    }
+    if (timeLeft <= 0) { timeUp(); return; }
     const id = window.setInterval(() => {
       setTimeLeft((t) => {
-        if (t <= 1) {
-          window.clearInterval(id);
-          return 0;
-        }
+        if (t <= 1) { window.clearInterval(id); return 0; }
         return t - 1;
       });
     }, 1000);
@@ -155,13 +180,13 @@ export function Scene() {
   }, [timeLeft, timeUp, phase]);
 
   // ── Found bursts ─────────────────────────────────────────────────────────
-  const [bursts, setBursts] = useState<BurstEntry[]>([]);
-  const burstTimeout = useRef<Map<string, number>>(new Map());
+  const [bursts, setBursts]     = useState<BurstEntry[]>([]);
+  const burstTimeout            = useRef<Map<string, number>>(new Map());
 
   // ── Idle hint ─────────────────────────────────────────────────────────────
-  const [hintFor, setHintFor] = useState<string | null>(null);
-  const idleTimer = useRef<number | null>(null);
-  const surfaceWrapRef = useRef<HTMLDivElement>(null);
+  const [hintFor, setHintFor]   = useState<string | null>(null);
+  const idleTimer               = useRef<number | null>(null);
+  const surfaceWrapRef          = useRef<HTMLDivElement>(null);
 
   function bumpIdle() {
     setHintFor(null);
@@ -174,9 +199,7 @@ export function Scene() {
 
   useEffect(() => {
     bumpIdle();
-    return () => {
-      if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    };
+    return () => { if (idleTimer.current) window.clearTimeout(idleTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level.id, found]);
 
@@ -187,12 +210,10 @@ export function Scene() {
       playPing();
       if ('vibrate' in navigator) navigator.vibrate?.(12);
 
-      // Trigger a burst at the creature's scene position
       const c = level.creatures.find((cr) => cr.id === creatureId);
       if (c) {
         const burstId = `${creatureId}-${Date.now()}`;
         setBursts((prev) => [...prev, { id: burstId, x: c.x, y: c.y, name: c.name }]);
-        // Remove after animation completes
         const tid = window.setTimeout(() => {
           setBursts((prev) => prev.filter((b) => b.id !== burstId));
           burstTimeout.current.delete(burstId);
@@ -200,19 +221,17 @@ export function Scene() {
         burstTimeout.current.set(burstId, tid);
       }
     },
-    [found, markFound, level.creatures]
+    [found, markFound, level.creatures],
   );
 
-  // Cleanup burst timers on unmount
   useEffect(() => {
-    return () => {
-      burstTimeout.current.forEach((tid) => window.clearTimeout(tid));
-    };
+    return () => { burstTimeout.current.forEach((tid) => window.clearTimeout(tid)); };
   }, []);
 
-  const total = level.creatures.length;
-  const foundCount = total - remaining;
+  const total       = level.creatures.length;
+  const foundCount  = total - remaining;
   const activeTarget = level.creatures.find((c) => !found.has(c.id));
+  void hintFor;
 
   return (
     <div
@@ -232,16 +251,15 @@ export function Scene() {
 
         {level.creatures.map((c) => {
           const isFound = found.has(c.id);
-          void hintFor;
           return (
             <div
               key={c.id}
               className="pointer-events-none absolute"
               style={{
-                left: `${c.x * 100}%`,
-                top: `${c.y * 100}%`,
-                width: `${c.w * 100}%`,
-                height: `${c.h * 100}%`,
+                left:      `${c.x * 100}%`,
+                top:       `${c.y * 100}%`,
+                width:     `${c.w * 100}%`,
+                height:    `${c.h * 100}%`,
                 transform: 'translate(-50%, -50%)',
               }}
               data-testid={`creature-${c.id}`}
@@ -250,28 +268,24 @@ export function Scene() {
           );
         })}
 
-        {/* Found burst animations — rendered inside the spotlight surface
-            so they sit in the correct coordinate space */}
         <AnimatePresence>
           <FoundBurst bursts={bursts} />
         </AnimatePresence>
       </Spotlight>
 
-      {/* HUD — title top-left, timer top-right */}
+      {/* HUD */}
       <SceneHud title={level.title} />
       <TimerDisplay timeLeft={timeLeft} total={level.timeLimit} />
-
-      {/* "Find this!" target vignette */}
       <TargetVignette creatures={level.creatures} found={found} />
-
-      {/* Remaining tray — bottom-right */}
       <RemainingTray creatures={level.creatures} found={found} />
-
-      {/* Progress pill — top-centre */}
       <ProgressPill found={foundCount} total={total} />
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// TargetVignette — left-side "Find this!" card.
+// ---------------------------------------------------------------------------
 
 function TargetVignette({
   creatures,
@@ -287,33 +301,38 @@ function TargetVignette({
         {target ? (
           <motion.div
             key={target.id}
-            initial={{ opacity: 0, scale: 0.85, x: -8 }}
+            initial={{ opacity: 0, scale: 0.80, x: -12 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: -6 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 28 }}
-            className="flex flex-col items-center gap-1.5"
+            exit={{ opacity: 0, scale: 0.90, x: -8 }}
+            transition={{ type: 'spring', stiffness: 240, damping: 26 }}
+            className="flex flex-col items-center gap-2"
           >
-            <div className="rounded-full bg-spotlight-edge px-3 py-0.5 text-[0.75rem] font-bold uppercase tracking-[0.18em] text-night-deep shadow-md">
-              Find this
+            {/* "FIND!" badge */}
+            <div className="rounded-full bg-spotlight-edge px-4 py-1 text-[0.78rem] font-black uppercase tracking-[0.24em] text-night-deep shadow-lg">
+              FIND!
             </div>
-            <div className="surface-card relative h-28 w-28 rounded-3xl p-1.5 shadow-2xl sm:h-24 sm:w-24">
-              <div className="absolute inset-0 -z-10 rounded-3xl bg-spotlight-warm/40 blur-xl animate-pulse-soft" />
+
+            {/* Creature card — larger for iPad */}
+            <div className="surface-card relative h-32 w-32 rounded-3xl p-2 shadow-2xl ring-2 ring-spotlight-warm/50 sm:h-28 sm:w-28">
+              <div className="absolute inset-0 -z-10 rounded-3xl bg-spotlight-warm/50 blur-2xl animate-pulse-soft" />
               <Creature kind={target.kind} found />
             </div>
-            <div className="surface-chrome-strong rounded-full px-3 py-1 text-base font-semibold text-paper shadow">
+
+            {/* Creature name */}
+            <div className="surface-chrome-strong rounded-full px-4 py-1.5 text-base font-bold text-paper shadow-md">
               {target.name}
             </div>
           </motion.div>
         ) : (
           <motion.div
             key="all-found"
-            initial={{ opacity: 0, scale: 0.85 }}
+            initial={{ opacity: 0, scale: 0.80 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-            className="surface-chrome-strong flex items-center gap-1.5 rounded-2xl px-4 py-2 text-base font-semibold text-paper shadow-lg"
+            transition={{ type: 'spring', stiffness: 240, damping: 26 }}
+            className="surface-chrome-strong flex items-center gap-2 rounded-2xl px-5 py-3 text-lg font-bold text-paper shadow-xl"
           >
-            <SparkleIcon className="h-5 w-5 text-spotlight-edge" />
-            All found
+            <SparkleIcon className="h-6 w-6 text-spotlight-edge" />
+            All found!
           </motion.div>
         )}
       </AnimatePresence>
@@ -321,11 +340,15 @@ function TargetVignette({
   );
 }
 
+// ---------------------------------------------------------------------------
+// SceneHud — compact level title top-left.
+// ---------------------------------------------------------------------------
+
 function SceneHud({ title }: { title: string }) {
   return (
-    <div className="pointer-events-none absolute top-3 left-4 right-4 flex items-start justify-between safe-top z-10">
-      <div className="surface-chrome-strong rounded-2xl px-4 py-1.5 shadow-lg">
-        <h2 className="font-display text-[1.333rem] font-semibold text-paper tracking-[-0.005em]">
+    <div className="pointer-events-none absolute top-3 left-4 safe-top z-10">
+      <div className="surface-chrome rounded-full px-4 py-1.5 shadow-md">
+        <h2 className="font-display text-[1.1rem] font-semibold text-paper/90 tracking-[-0.005em]">
           {title}
         </h2>
       </div>
@@ -333,44 +356,46 @@ function SceneHud({ title }: { title: string }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// ProgressPill — top-centre found / total count.
+// ---------------------------------------------------------------------------
+
 function ProgressPill({ found, total }: { found: number; total: number }) {
-  const remaining = total - found;
-  const pct = total === 0 ? 0 : Math.round((found / total) * 100);
-  const allDone = remaining === 0;
+  const allDone = found >= total;
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={`progress-${found}-${total}`}
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 6 }}
-        transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-        className="surface-chrome-strong absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 rounded-2xl px-5 py-2 min-w-[148px] shadow-lg safe-top z-10"
+        key={`pp-${found}`}
+        initial={{ opacity: 0, y: -5, scale: 0.92 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 5 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 26 }}
+        className="surface-chrome-strong pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-10 safe-top flex items-center gap-2 rounded-full px-5 py-2 shadow-lg"
       >
-        <div className="flex items-baseline gap-1.5 text-paper tabular-nums">
-          <span className="font-display text-[1.333rem] font-bold text-spotlight-edge">
-            {found}
+        {allDone ? (
+          <span className="flex items-center gap-1.5 text-base font-bold text-spotlight-edge">
+            <SparkleIcon className="h-5 w-5" />
+            All found!
           </span>
-          <span className="text-sm font-medium text-paper/65">/</span>
-          <span className="font-display text-base font-semibold text-paper/85">
-            {total}
-          </span>
-          <span className="ml-1 text-sm font-medium text-paper/85 tabular-nums">
-            {allDone ? 'all found' : remaining === 1 ? 'one to go' : 'found'}
-          </span>
-        </div>
-        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-paper/15">
-          <motion.div
-            className="h-full rounded-full bg-spotlight-edge"
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-          />
-        </div>
+        ) : (
+          <>
+            <span className="font-display text-[1.333rem] font-bold text-spotlight-edge tabular-nums leading-none">
+              {found}
+            </span>
+            <span className="text-paper/40 font-bold text-lg leading-none">/</span>
+            <span className="font-display text-[1.333rem] font-bold text-paper tabular-nums leading-none">
+              {total}
+            </span>
+          </>
+        )}
       </motion.div>
     </AnimatePresence>
   );
 }
+
+// ---------------------------------------------------------------------------
+// RemainingTray — bottom-centre collection strip.
+// ---------------------------------------------------------------------------
 
 function RemainingTray({
   creatures,
@@ -379,37 +404,39 @@ function RemainingTray({
   creatures: LevelCreature[];
   found: Set<string>;
 }) {
-  const cols = Math.min(creatures.length, 9);
   return (
     <div
-      className="pointer-events-none absolute bottom-4 right-4 safe-bottom z-10 max-w-[88%]"
+      className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 safe-bottom z-10"
       aria-label="Creatures found"
       role="group"
     >
-      <div
-        className="surface-chrome-strong grid gap-2 rounded-3xl p-2.5 shadow-2xl"
-        style={{
-          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-        }}
-      >
+      <div className="surface-chrome-strong flex items-center gap-2 rounded-3xl p-2.5 shadow-2xl">
         {creatures.map((c) => {
           const isFound = found.has(c.id);
           return (
-            <div
-              key={c.id}
+            <motion.div
+              // Re-mounting on state change triggers the slot-found animation.
+              key={`${c.id}-${isFound ? 'found' : 'hidden'}`}
+              initial={isFound ? { scale: 0.62, opacity: 0 } : false}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={
+                isFound
+                  ? { type: 'spring', stiffness: 400, damping: 22 }
+                  : {}
+              }
               className={`relative h-14 w-14 overflow-hidden rounded-2xl transition-[background-color,box-shadow] duration-[260ms] ${
                 isFound
-                  ? 'surface-card shadow-md ring-2 ring-spotlight-edge'
-                  : 'bg-[rgba(12,14,26,0.85)] ring-2 ring-[rgba(245,238,222,0.22)]'
+                  ? 'surface-card ring-2 ring-spotlight-edge shadow-[0_0_14px_rgba(212,167,60,0.45)]'
+                  : 'bg-[rgba(12,14,26,0.88)] ring-1 ring-[rgba(245,238,222,0.14)]'
               }`}
               aria-label={isFound ? c.name : 'hidden'}
               title={isFound ? c.name : 'hidden'}
             >
               {isFound && (
-                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-spotlight-warm/18" />
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-spotlight-warm/22" />
               )}
               <Creature kind={c.kind} found={isFound} />
-            </div>
+            </motion.div>
           );
         })}
       </div>

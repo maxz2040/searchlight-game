@@ -1,24 +1,23 @@
-// Creature sprite — AI-generated chibi mascot PNGs (Higgsfield Flux 2.0)
-// keyed by `kind`. The PNGs ship in /public/creatures/ so Vite copies
-// them verbatim and the service worker caches them for offline play.
+// Creature sprite — AI-generated chibi mascot PNGs.
 //
 // Two visual states:
-//   * `found = true`  → bright sprite, pops against the dim scene
-//   * `found = false` → silhouette form (CSS filter darkens to a near-solid
-//                        shadow against the night palette), so kids see the
-//                        outline and know "something's hiding here" once
-//                        the spotlight grazes the area.
+//   found = true  → bright sprite with a warm amber glow halo
+//   found = false → mysterious silhouette with a cool moonlit blue tint
 //
-// CSS filter chain reasoning:
-//   `brightness(0)` flattens every colour to black. `drop-shadow` then
-//   gives back a faint navy outline so the silhouette doesn't disappear
-//   into the background entirely. Cheaper than shipping two PNGs per kind.
+// CSS filter reasoning:
+//   Found: drop-shadow with two layers — outer amber glow (matches lantern
+//   palette) + inner dark shadow for depth. Makes found creatures pop
+//   against the light card background.
+//
+//   Hidden: brightness(0.12) darkens to near-black, saturate(0.15) keeps
+//   a ghost of colour, sepia(0.4) + hue-rotate(200deg) shifts the remnant
+//   colour toward cool blue-indigo so the silhouette reads as moonlit
+//   shadow rather than flat grey. opacity(0.88) softens it slightly.
 
 import type { CreatureKind } from '../levels/levels';
 
 interface Props {
   kind: CreatureKind;
-  /** When false, render the silhouette only (the hidden-in-the-dark form). */
   found: boolean;
 }
 
@@ -43,15 +42,21 @@ export function Creature({ kind, found }: Props) {
       decoding="async"
       loading="eager"
       draggable={false}
-      // Intrinsic 1:1 dimensions kill any aspect-ratio jump while the
-      // chroma-keyed PNG decodes. Container sets visual size via class.
       width={256}
       height={256}
       className="h-full w-full object-contain select-none pointer-events-none"
       style={
         found
-          ? { filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35))' }
-          : { filter: 'brightness(0.18) saturate(0) opacity(0.85)' }
+          ? {
+              filter:
+                'drop-shadow(0 0 10px rgba(212,167,60,0.55)) ' +
+                'drop-shadow(0 3px 8px rgba(0,0,0,0.30))',
+            }
+          : {
+              filter:
+                'brightness(0.12) saturate(0.15) sepia(0.4) ' +
+                'hue-rotate(200deg) opacity(0.88)',
+            }
       }
     />
   );
