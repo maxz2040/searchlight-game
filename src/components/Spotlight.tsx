@@ -105,19 +105,25 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
   // Collision loop. rAF-driven, reads from motion values, writes to
   // store via onReveal. Runs only while at least one creature is
   // unfound — exits cleanly otherwise.
-  // Dwell threshold in ms — the spotlight must continuously overlap a
-  // creature's bbox for at least this long before we count it as "found".
-  // Stops accidental skim-finds where a fast sweep across the scene marks
-  // multiple creatures in passing. 700 ms is the sweet spot — slow enough
-  // to feel deliberate, fast enough to feel responsive once the kid lines
-  // up the lantern.
-  const DWELL_MS = 700;
+  // Dwell threshold — the spotlight must continuously overlap a creature's
+  // bbox for this long before it counts as "found". 1 400 ms feels deliberate
+  // without being frustrating: a casual sweep won't trigger it, but holding
+  // the lantern still for a moment will.
+  const DWELL_MS = 1400;
+
+  // After finding a creature we enforce a short cooldown before the next
+  // target's dwell timer can begin. This prevents chain-fires when clustered
+  // creatures are all under the spotlight at once.
+  const FIND_COOLDOWN_MS = 800;
 
   useEffect(() => {
     let raf = 0;
     // Per-creature timestamp of when the spotlight first started overlapping
     // its bbox (continuously). Reset to undefined when overlap breaks.
     const overlapStart: Record<string, number | undefined> = {};
+    // Timestamp of the most recent find — used to enforce FIND_COOLDOWN_MS.
+    let lastFoundAt = 0;
+
     function tick() {
       const surface = surfaceRef.current;
       if (!surface) {
@@ -136,17 +142,22 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
         return;
       }
 
-      // v2 UAT fix (auto-mark on spawn): the spotlight is initialised at the
-      // surface centre so the player sees a lantern before the first touch.
-      // But if a creature's bbox covers that centre, the dwell timer fires
-      // 700 ms later and the level "self-plays" before the kid does anything.
-      // Gate collision on at least one real pointer interaction.
+      // Gate collision on at least one real pointer interaction so the
+      // centre-initialised spotlight can't auto-find creatures on spawn.
       if (!pointerInteractedRef.current) {
         raf = requestAnimationFrame(tick);
         return;
       }
 
       const now = performance.now();
+
+      // Enforce post-find cooldown — don't start a new dwell timer until
+      // FIND_COOLDOWN_MS has elapsed since the last successful find.
+      if (now - lastFoundAt < FIND_COOLDOWN_MS) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
       const seen = foundRef.current;
       const target = activeIdRef.current;
       // ONLY check the active target. Panning through other unfound
@@ -161,6 +172,7 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
         if (overlapping) {
           if (overlapStart[c.id] == null) overlapStart[c.id] = now;
           else if (now - overlapStart[c.id]! >= DWELL_MS) {
+            lastFoundAt = now;
             onRevealRef.current(c.id);
             overlapStart[c.id] = undefined;
           }
