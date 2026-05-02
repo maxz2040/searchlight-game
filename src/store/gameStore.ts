@@ -1,11 +1,18 @@
 // Game state via Zustand. Lightweight, no providers, no re-renders for
 // fast-changing pointer state (that lives in Framer Motion motion values
 // inside the Spotlight component).
+//
+// Phase machine (v2 — lobby added):
+//   loading → tutorial → playing → complete
+//                   ↑                  |
+//              lobby  ←────────────────┘
+//                 ↑
+//   (also reachable via "All Worlds" button on Complete)
 
 import { create } from 'zustand';
 import { LEVELS, type Level, getLevel, nextLevelId } from '../levels/levels';
 
-export type Phase = 'loading' | 'tutorial' | 'playing' | 'complete';
+export type Phase = 'loading' | 'tutorial' | 'playing' | 'complete' | 'lobby';
 
 interface GameState {
   phase: Phase;
@@ -14,6 +21,8 @@ interface GameState {
   startedAt: number | null;
   completedAt: number | null;
   timeExpired: boolean;
+  /** Best star score achieved per level id — persists across replays. */
+  levelStars: Record<string, number>;
 
   // Derived selectors
   level(): Level;
@@ -29,6 +38,7 @@ interface GameState {
   selectLevel(id: string): void;
   replay(): void;
   next(): void;
+  goToLobby(): void;
 }
 
 export const useGame = create<GameState>((set, get) => ({
@@ -38,6 +48,7 @@ export const useGame = create<GameState>((set, get) => ({
   startedAt: null,
   completedAt: null,
   timeExpired: false,
+  levelStars: {},
 
   level() {
     const id = get().levelId;
@@ -89,9 +100,7 @@ export const useGame = create<GameState>((set, get) => ({
     const isComplete = level ? next.size >= level.creatures.length : false;
     set({
       found: next,
-      ...(isComplete
-        ? { phase: 'complete', completedAt: Date.now() }
-        : {}),
+      ...(isComplete ? { phase: 'complete', completedAt: Date.now() } : {}),
     });
   },
   timeUp() {
@@ -121,26 +130,33 @@ export const useGame = create<GameState>((set, get) => ({
     });
   },
   next() {
-    const { levelId } = get();
+    // Save best stars for completed level, advance to next, show lobby.
+    const { levelId, levelStars } = get();
+    const earned = get().stars();
     const nxt = nextLevelId(levelId);
-    if (!nxt) {
-      set({
-        levelId: LEVELS[0].id,
-        found: new Set(),
-        phase: 'tutorial',
-        startedAt: null,
-        completedAt: null,
-        timeExpired: false,
-      });
-      return;
-    }
     set({
-      levelId: nxt,
+      levelId: nxt ?? LEVELS[0].id,
       found: new Set(),
-      phase: 'tutorial',
+      phase: 'lobby',
       startedAt: null,
       completedAt: null,
       timeExpired: false,
+      levelStars: {
+        ...levelStars,
+        [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
+      },
+    });
+  },
+  goToLobby() {
+    // Save best stars, keep current levelId, show lobby.
+    const { levelId, levelStars } = get();
+    const earned = get().stars();
+    set({
+      phase: 'lobby',
+      levelStars: {
+        ...levelStars,
+        [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
+      },
     });
   },
 }));

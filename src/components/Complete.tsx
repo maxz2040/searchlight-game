@@ -110,6 +110,7 @@ export function Complete() {
   const timeExpired = useGame((s) => s.timeExpired);
   const replay      = useGame((s) => s.replay);
   const next        = useGame((s) => s.next);
+  const goToLobby   = useGame((s) => s.goToLobby);
 
   const videoUrl = VIDEO_URL[level.id];
   const [phase, setPhase] = useState<'video' | 'card'>(
@@ -294,9 +295,16 @@ export function Complete() {
           transition={{ delay: 0.76, duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
           className="mt-1 flex flex-wrap items-center justify-center gap-3"
         >
+          {/* All Worlds — opens level-select lobby */}
+          <button
+            onClick={goToLobby}
+            className="surface-chrome min-h-[60px] min-w-[136px] rounded-full px-6 py-3 text-base font-bold text-paper/80 active:scale-95 transition-transform duration-[120ms] shadow-md"
+          >
+            All Worlds
+          </button>
           <button
             onClick={replay}
-            className="surface-chrome min-h-[60px] min-w-[148px] rounded-full px-7 py-3 text-lg font-bold text-paper active:scale-95 transition-transform duration-[120ms] shadow-md"
+            className="surface-chrome min-h-[60px] min-w-[136px] rounded-full px-6 py-3 text-base font-bold text-paper active:scale-95 transition-transform duration-[120ms] shadow-md"
           >
             Play again
           </button>
