@@ -6,6 +6,11 @@ import tailwindcss from '@tailwindcss/vite'
 // Tailwind v4 via the Vite plugin (no postcss config needed).
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    host: '0.0.0.0',
+    port: 5000,
+    allowedHosts: true,
+  },
   test: {
     environment: 'happy-dom',
     globals: true,
