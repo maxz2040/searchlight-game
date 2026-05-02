@@ -79,6 +79,6 @@ describe('Scene', () => {
 
   it('renders the play-surface test handle', () => {
     const { container } = render(<Scene />)
-    expect(container.querySelector('[data-testid="play-surface"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="spotlight-surface"]')).toBeTruthy()
   })
 })

@@ -22,7 +22,7 @@ export default function App() {
   const showScene = phase === 'tutorial' || phase === 'playing' || phase === 'complete';
 
   return (
-    <div className="relative h-full w-full bg-night-deep">
+    <div className="relative h-full w-full bg-night-deep" data-phase={phase}>
       {showScene && <Scene />}
 
       <AnimatePresence>

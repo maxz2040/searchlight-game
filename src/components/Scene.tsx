@@ -8,6 +8,12 @@
 //   * ProgressPill: stripped to the essential number ratio, spring animation.
 //   * RemainingTray: moved to bottom-centre, slots pop when a creature is found.
 //   * SceneHud: compact level label stays top-left for orientation.
+//
+// SVG-creature levels (6–25):
+//   * Unfound SVG creatures render as dim silhouettes INSIDE the spotlight
+//     overlay so they're only visible when the lantern passes over them.
+//   * Found SVG creatures spring up ABOVE the overlay so they remain visible.
+//   * Endless levels (timeLimit ≥ 9000) hide the countdown timer entirely.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +23,7 @@ import { SceneBackground } from './SceneBackground';
 import { useGame } from '../store/gameStore';
 import { playPing } from '../sound';
 import type { Creature as LevelCreature } from '../levels/levels';
+import { isSvgKind } from './SvgCreature';
 import { SparkleIcon } from './icons';
 
 // ---------------------------------------------------------------------------
@@ -160,6 +167,8 @@ export function Scene() {
   const timeUp     = useGame((s) => s.timeUp);
   const phase      = useGame((s) => s.phase);
 
+  const isEndless = level.timeLimit >= 9000;
+
   // ── Countdown timer ──────────────────────────────────────────────────────
   const [timeLeft, setTimeLeft] = useState(level.timeLimit);
 
@@ -169,6 +178,7 @@ export function Scene() {
 
   useEffect(() => {
     if (phase !== 'playing') return;
+    if (isEndless) return;          // Endless levels: no countdown
     if (timeLeft <= 0) { timeUp(); return; }
     const id = window.setInterval(() => {
       setTimeLeft((t) => {
@@ -177,7 +187,7 @@ export function Scene() {
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [timeLeft, timeUp, phase]);
+  }, [timeLeft, timeUp, phase, isEndless]);
 
   // ── Found bursts ─────────────────────────────────────────────────────────
   const [bursts, setBursts]     = useState<BurstEntry[]>([]);
@@ -191,8 +201,6 @@ export function Scene() {
   function bumpIdle() {
     setHintFor(null);
     if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    // 3.5 s idle before the gentle hint ring appears — long enough that it
-    // only shows when a 3-year-old is genuinely stuck, not on every pause.
     idleTimer.current = window.setTimeout(() => {
       const next = level.creatures.find((c) => !found.has(c.id));
       if (next) setHintFor(next.id);
@@ -210,11 +218,9 @@ export function Scene() {
       if (found.has(creatureId)) return;
       markFound(creatureId);
       playPing();
-      // 60 ms is clearly perceptible on iPad without being startling for toddlers.
       if ('vibrate' in navigator) navigator.vibrate?.([60]);
 
       const c = level.creatures.find((cr) => cr.id === creatureId);
-      // Announce to screen readers.
       const announcer = document.getElementById('find-announce');
       if (c && announcer) announcer.textContent = `Found ${c.name}!`;
       if (c) {
@@ -238,7 +244,6 @@ export function Scene() {
   const foundCount   = total - remaining;
   const activeTarget = level.creatures.find((c) => !found.has(c.id));
 
-  // Creature to show the idle hint ring on (after 3.5 s of no movement).
   const hintCreature = hintFor
     ? level.creatures.find((c) => c.id === hintFor && !found.has(c.id)) ?? null
     : null;
@@ -256,11 +261,13 @@ export function Scene() {
         found={found}
         activeId={activeTarget?.id}
         onReveal={onReveal}
+        dwellMs={level.dwellMs}
       >
         <SceneBackground scene={level.scene} />
 
         {level.creatures.map((c) => {
-          const isFound = found.has(c.id);
+          const isFound  = found.has(c.id);
+          const showBody = isSvgKind(c.kind) && !isFound;
           return (
             <div
               key={c.id}
@@ -274,7 +281,11 @@ export function Scene() {
               }}
               data-testid={`creature-${c.id}`}
               data-found={isFound ? 'true' : 'false'}
-            />
+            >
+              {/* Unfound SVG creatures show as dim silhouettes inside the
+                  spotlight overlay — visible only when the lantern reveals them. */}
+              {showBody && <Creature kind={c.kind} found={false} />}
+            </div>
           );
         })}
 
@@ -283,9 +294,31 @@ export function Scene() {
         </AnimatePresence>
       </Spotlight>
 
-      {/* Idle hint — amber glow ring pulses at the unfound target creature
-          after 3.5 s of no pointer movement. Rendered ABOVE the spotlight
-          overlay so it pierces the darkness and guides young players. */}
+      {/* Found SVG creatures — rendered ABOVE the spotlight overlay so they
+          remain visible after discovery. Spring-in from the creature position. */}
+      {level.creatures
+        .filter((c) => found.has(c.id) && isSvgKind(c.kind))
+        .map((c) => (
+          <motion.div
+            key={`found-svg-${c.id}`}
+            className="pointer-events-none absolute"
+            initial={{ scale: 0.72, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 22 }}
+            style={{
+              left:      `${c.x * 100}%`,
+              top:       `${c.y * 100}%`,
+              width:     `${c.w * 100}%`,
+              height:    `${c.h * 100}%`,
+              transform: 'translate(-50%, -50%)',
+              zIndex:    7,
+            }}
+          >
+            <Creature kind={c.kind} found={true} />
+          </motion.div>
+        ))}
+
+      {/* Idle hint ring */}
       {hintCreature && (
         <div
           aria-hidden
@@ -305,17 +338,11 @@ export function Scene() {
         />
       )}
 
-      {/* Hidden aria-live region — announces creature finds to screen readers. */}
-      <div
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-        id="find-announce"
-      />
+      <div aria-live="polite" aria-atomic="true" className="sr-only" id="find-announce" />
 
       {/* HUD */}
       <SceneHud title={level.title} />
-      <TimerDisplay timeLeft={timeLeft} total={level.timeLimit} />
+      {!isEndless && <TimerDisplay timeLeft={timeLeft} total={level.timeLimit} />}
       <TargetVignette creatures={level.creatures} found={found} />
       <RemainingTray creatures={level.creatures} found={found} />
       <ProgressPill found={foundCount} total={total} />
@@ -347,18 +374,13 @@ function TargetVignette({
             transition={{ type: 'spring', stiffness: 240, damping: 26 }}
             className="flex flex-col items-center gap-2"
           >
-            {/* "FIND!" badge */}
             <div className="rounded-full bg-spotlight-edge px-4 py-1 text-[0.78rem] font-black uppercase tracking-[0.24em] text-night-deep shadow-lg">
               FIND!
             </div>
-
-            {/* Creature card — larger for iPad */}
             <div className="surface-card relative h-32 w-32 rounded-3xl p-2 shadow-2xl ring-2 ring-spotlight-warm/50 sm:h-28 sm:w-28">
               <div className="absolute inset-0 -z-10 rounded-3xl bg-spotlight-warm/50 blur-2xl animate-pulse-soft" />
               <Creature kind={target.kind} found />
             </div>
-
-            {/* Creature name */}
             <div className="surface-chrome-strong rounded-full px-4 py-1.5 text-base font-bold text-paper shadow-md">
               {target.name}
             </div>
@@ -455,7 +477,6 @@ function RemainingTray({
           const isFound = found.has(c.id);
           return (
             <motion.div
-              // Re-mounting on state change triggers the slot-found animation.
               key={`${c.id}-${isFound ? 'found' : 'hidden'}`}
               initial={isFound ? { scale: 0.62, opacity: 0 } : false}
               animate={{ scale: 1, opacity: 1 }}

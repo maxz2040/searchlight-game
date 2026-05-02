@@ -1,23 +1,13 @@
 // Lobby — level-select screen shown between Complete and Tutorial.
 //
-// Scene cards are displayed in a responsive grid (3 columns on iPad portrait,
-// 5 columns on iPad landscape ≥ 1100 px). Each card shows:
-//   * Scene image (dimmed, vignette overlay)
-//   * Level number badge + difficulty pill
-//   * Best star score (amber ★ filled, dim ☆ empty)
-//   * Creature count + time limit
-//   * Large tap target ("Play") that calls selectLevel()
-//
-// Animation:
-//   * Cards stagger in from below (0.08 s per card) with expo-out easing.
-//   * Active level (current levelId in store) gets a warm amber ring.
-//   * Sparkle particles drift in the background.
+// 25 levels in a scrollable responsive grid (3 columns portrait / 5 columns
+// landscape ≥ 1100 px). Cards show scene thumbnail, level number, mechanic
+// variant badge, best star rating, creature count and time limit.
 
 import { motion } from 'framer-motion';
 import { useGame } from '../store/gameStore';
 import { LEVELS } from '../levels/levels';
 
-// Scene thumbnail paths (same PNGs used by SceneBackground).
 const SCENE_IMG: Record<string, string> = {
   forest: '/scenes/lvl-1-forest.png',
   meadow: '/scenes/lvl-2-meadow.png',
@@ -26,13 +16,48 @@ const SCENE_IMG: Record<string, string> = {
   snow:   '/scenes/lvl-5-snow.png',
 };
 
-// Per-level metadata shown on the card.
-const LEVEL_META: Record<string, { num: number; difficulty: string; diffColor: string }> = {
-  'lvl-1': { num: 1, difficulty: 'Beginner',   diffColor: '#78c47a' },
-  'lvl-2': { num: 2, difficulty: 'Explorer',   diffColor: '#d4a73c' },
-  'lvl-3': { num: 3, difficulty: 'Adventurer', diffColor: '#e07a5f' },
-  'lvl-4': { num: 4, difficulty: 'Expert',     diffColor: '#c97ae0' },
-  'lvl-5': { num: 5, difficulty: 'Master',     diffColor: '#e05f5f' },
+// ---------------------------------------------------------------------------
+// Per-level metadata
+// ---------------------------------------------------------------------------
+
+interface LevelMeta {
+  num:        number;
+  difficulty: string;
+  diffColor:  string;
+}
+
+const LEVEL_META: Record<string, LevelMeta> = {
+  // ── Original composited levels ───────────────────────────────────────────
+  'lvl-1':  { num:  1, difficulty: 'Beginner',    diffColor: '#78c47a' },
+  'lvl-2':  { num:  2, difficulty: 'Explorer',    diffColor: '#d4a73c' },
+  'lvl-3':  { num:  3, difficulty: 'Adventurer',  diffColor: '#e07a5f' },
+  'lvl-4':  { num:  4, difficulty: 'Expert',      diffColor: '#c97ae0' },
+  'lvl-5':  { num:  5, difficulty: 'Master',      diffColor: '#e05f5f' },
+  // ── Group A — Classic ────────────────────────────────────────────────────
+  'lvl-6':  { num:  6, difficulty: 'Classic',     diffColor: '#78c47a' },
+  'lvl-7':  { num:  7, difficulty: 'Classic',     diffColor: '#78c47a' },
+  'lvl-8':  { num:  8, difficulty: 'Classic',     diffColor: '#78c47a' },
+  'lvl-9':  { num:  9, difficulty: 'Classic',     diffColor: '#78c47a' },
+  // ── Group B — Quick Dwell ────────────────────────────────────────────────
+  'lvl-10': { num: 10, difficulty: 'Quick Dwell', diffColor: '#f5c518' },
+  'lvl-11': { num: 11, difficulty: 'Quick Dwell', diffColor: '#f5c518' },
+  'lvl-12': { num: 12, difficulty: 'Quick Dwell', diffColor: '#f5c518' },
+  'lvl-13': { num: 13, difficulty: 'Quick Dwell', diffColor: '#f5c518' },
+  // ── Group C — Wide Beam ──────────────────────────────────────────────────
+  'lvl-14': { num: 14, difficulty: 'Wide Beam',   diffColor: '#4ab4e0' },
+  'lvl-15': { num: 15, difficulty: 'Wide Beam',   diffColor: '#4ab4e0' },
+  'lvl-16': { num: 16, difficulty: 'Wide Beam',   diffColor: '#4ab4e0' },
+  'lvl-17': { num: 17, difficulty: 'Wide Beam',   diffColor: '#4ab4e0' },
+  // ── Group D — Pinhole ────────────────────────────────────────────────────
+  'lvl-18': { num: 18, difficulty: 'Pinhole',     diffColor: '#c084e0' },
+  'lvl-19': { num: 19, difficulty: 'Pinhole',     diffColor: '#c084e0' },
+  'lvl-20': { num: 20, difficulty: 'Pinhole',     diffColor: '#c084e0' },
+  'lvl-21': { num: 21, difficulty: 'Pinhole',     diffColor: '#c084e0' },
+  // ── Group E — Endless ────────────────────────────────────────────────────
+  'lvl-22': { num: 22, difficulty: 'Endless',     diffColor: '#f08060' },
+  'lvl-23': { num: 23, difficulty: 'Endless',     diffColor: '#f08060' },
+  'lvl-24': { num: 24, difficulty: 'Endless',     diffColor: '#f08060' },
+  'lvl-25': { num: 25, difficulty: 'Endless',     diffColor: '#f08060' },
 };
 
 // Deterministic sparkle positions.
@@ -54,7 +79,7 @@ const SPARKLES = [
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 // ---------------------------------------------------------------------------
-// Mini star row — reused inside each card.
+// MiniStars
 // ---------------------------------------------------------------------------
 function MiniStars({ filled, total = 3 }: { filled: number; total?: number }) {
   return (
@@ -96,34 +121,38 @@ function MiniStars({ filled, total = 3 }: { filled: number; total?: number }) {
 // LevelCard
 // ---------------------------------------------------------------------------
 interface LevelCardProps {
-  levelId: string;
-  title: string;
-  scene: string;
-  creatureCount: number;
-  timeLimit: number;
-  earnedStars: number;
-  isActive: boolean;
-  index: number;
-  onSelect: (id: string) => void;
+  levelId:      string;
+  title:        string;
+  scene:        string;
+  creatureCount:number;
+  timeLimit:    number;
+  earnedStars:  number;
+  isActive:     boolean;
+  index:        number;
+  onSelect:     (id: string) => void;
 }
 
 function LevelCard({
   levelId, title, scene, creatureCount, timeLimit,
   earnedStars, isActive, index, onSelect,
 }: LevelCardProps) {
-  const meta = LEVEL_META[levelId];
-  const imgSrc = SCENE_IMG[scene];
+  const meta    = LEVEL_META[levelId];
+  const imgSrc  = SCENE_IMG[scene];
+  const endless = timeLimit >= 9000;
   const minutes = Math.floor(timeLimit / 60);
   const secs    = timeLimit % 60;
-  const timeStr = minutes > 0 ? `${minutes}:${String(secs).padStart(2, '0')}` : `${secs}s`;
+  const timeStr = endless
+    ? '∞'
+    : minutes > 0 ? `${minutes}:${String(secs).padStart(2, '0')}` : `${secs}s`;
 
   return (
     <motion.button
       initial={{ opacity: 0, y: 36, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.1 + index * 0.08, duration: 0.52, ease: EASE }}
+      transition={{ delay: 0.06 + (index % 10) * 0.06, duration: 0.52, ease: EASE }}
       whileTap={{ scale: 0.97 }}
       onClick={() => onSelect(levelId)}
+      data-testid={`level-card-${levelId}`}
       className={`relative flex flex-col overflow-hidden rounded-3xl shadow-2xl focus:outline-none ${
         isActive
           ? 'ring-[3px] ring-spotlight-edge shadow-[0_0_28px_rgba(212,167,60,0.45)]'
@@ -133,13 +162,13 @@ function LevelCard({
       style={{ minWidth: 0 }}
     >
       {/* Scene image */}
-      <div className="relative h-36 w-full overflow-hidden">
+      <div className="relative h-32 w-full overflow-hidden">
         <img
           src={imgSrc}
           alt=""
           aria-hidden
           decoding="async"
-          loading="eager"
+          loading="lazy"
           className="absolute inset-0 h-full w-full object-cover"
           style={{ filter: 'brightness(0.58) saturate(1.04)' }}
         />
@@ -150,24 +179,24 @@ function LevelCard({
               'linear-gradient(to bottom, rgba(5,7,20,0) 30%, rgba(5,7,20,0.80) 100%)',
           }}
         />
-        {/* Level badge — top left */}
-        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+        {/* Level number badge — top left */}
+        <div className="absolute top-2 left-2 flex items-center gap-1.5">
           <div className="rounded-full bg-night-deep/80 px-2 py-0.5 text-xs font-black uppercase tracking-widest text-paper/80 backdrop-blur-sm">
             {meta?.num ?? '?'}
           </div>
         </div>
         {/* Stars — top right */}
-        <div className="absolute top-2.5 right-2.5">
+        <div className="absolute top-2 right-2">
           <MiniStars filled={earnedStars} />
         </div>
-        {/* Difficulty badge — bottom left of image */}
+        {/* Mechanic variant badge — bottom left */}
         {meta && (
           <div
-            className="absolute bottom-2.5 left-2.5 rounded-full px-2 py-0.5 text-xs font-bold backdrop-blur-sm"
+            className="absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[0.68rem] font-bold backdrop-blur-sm"
             style={{
-              color: meta.diffColor,
+              color:      meta.diffColor,
               background: `${meta.diffColor}22`,
-              border: `1px solid ${meta.diffColor}55`,
+              border:     `1px solid ${meta.diffColor}55`,
             }}
           >
             {meta.difficulty}
@@ -176,19 +205,19 @@ function LevelCard({
       </div>
 
       {/* Info panel */}
-      <div className="surface-chrome-strong flex flex-col gap-1.5 p-3">
-        <h3 className="font-display text-[1.05rem] font-bold text-paper leading-tight text-left line-clamp-1">
+      <div className="surface-chrome-strong flex flex-col gap-1 p-2.5">
+        <h3 className="font-display text-[0.95rem] font-bold text-paper leading-tight text-left line-clamp-1">
           {title}
         </h3>
-        <div className="flex items-center gap-2 text-xs font-semibold text-paper/60">
+        <div className="flex items-center gap-1.5 text-[0.72rem] font-semibold text-paper/55">
           <span>{creatureCount} 🐾</span>
-          <span className="text-paper/30">·</span>
+          <span className="text-paper/25">·</span>
           <span>{timeStr}</span>
         </div>
 
         {/* Play CTA */}
         <div
-          className={`mt-0.5 flex items-center justify-center gap-1.5 rounded-full py-2 text-sm font-bold transition-colors ${
+          className={`mt-0.5 flex items-center justify-center gap-1 rounded-full py-1.5 text-xs font-bold transition-colors ${
             isActive
               ? 'bg-spotlight-edge text-night-deep'
               : 'bg-[rgba(245,238,222,0.10)] text-paper'
@@ -222,39 +251,39 @@ export function Lobby() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.44, ease: EASE }}
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center overflow-hidden bg-night-deep"
+      className="absolute inset-0 z-20 flex flex-col items-center overflow-y-auto bg-night-deep"
     >
-      {/* Background sparkle particles */}
-      {SPARKLES.map((p, i) => (
+      {/* Background sparkle particles (fixed behind scroll) */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+        {SPARKLES.map((p, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-spotlight-warm animate-float-particle"
+            style={{
+              left:   `${p.x}%`,
+              top:    `${p.y}%`,
+              width:  p.s,
+              height: p.s,
+              '--dur':       `${p.d}s`,
+              animationDelay:`${p.delay}s`,
+            } as React.CSSProperties}
+          />
+        ))}
         <div
-          key={i}
-          className="absolute rounded-full bg-spotlight-warm animate-float-particle pointer-events-none"
+          className="absolute inset-0"
           style={{
-            left: `${p.x}%`,
-            top:  `${p.y}%`,
-            width:  p.s,
-            height: p.s,
-            '--dur': `${p.d}s`,
-            animationDelay: `${p.delay}s`,
-          } as React.CSSProperties}
+            background:
+              'radial-gradient(ellipse 80% 55% at 50% 45%, rgba(212,167,60,0.09) 0%, transparent 70%)',
+          }}
         />
-      ))}
-
-      {/* Radial warm glow behind cards */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 55% at 50% 55%, rgba(212,167,60,0.10) 0%, transparent 70%)',
-        }}
-      />
+      </div>
 
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.44, ease: EASE }}
-        className="relative z-10 mb-6 flex flex-col items-center gap-2"
+        className="relative z-10 mt-8 mb-5 flex flex-col items-center gap-2"
       >
         <h1 className="font-display text-[2.2rem] font-bold text-paper leading-none tracking-[-0.01em]">
           Choose Your World
@@ -262,10 +291,35 @@ export function Lobby() {
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-paper/45">
           {LEVELS.length} adventures await
         </p>
+
+        {/* Mechanic group legend */}
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+          {(
+            [
+              { label: 'Classic',    color: '#78c47a' },
+              { label: 'Quick Dwell',color: '#f5c518' },
+              { label: 'Wide Beam',  color: '#4ab4e0' },
+              { label: 'Pinhole',    color: '#c084e0' },
+              { label: 'Endless',    color: '#f08060' },
+            ] as const
+          ).map(({ label, color }) => (
+            <span
+              key={label}
+              className="rounded-full px-2.5 py-0.5 text-[0.68rem] font-bold"
+              style={{
+                color,
+                background: `${color}22`,
+                border:     `1px solid ${color}55`,
+              }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
       </motion.div>
 
-      {/* Level cards — responsive: 3-col portrait / 5-col landscape */}
-      <div className="relative z-10 grid w-full max-w-6xl grid-cols-3 min-[1100px]:grid-cols-5 gap-4 px-6">
+      {/* Level cards grid */}
+      <div className="relative z-10 w-full max-w-6xl grid grid-cols-3 min-[1100px]:grid-cols-5 gap-3 px-4 pb-10">
         {LEVELS.map((level, i) => (
           <LevelCard
             key={level.id}
@@ -287,7 +341,7 @@ export function Lobby() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.52, duration: 0.44, ease: EASE }}
-        className="relative z-10 mt-6 text-xs font-medium text-paper/35 tracking-wide"
+        className="relative z-10 mb-6 text-xs font-medium text-paper/35 tracking-wide"
       >
         Tap any world to begin
       </motion.p>

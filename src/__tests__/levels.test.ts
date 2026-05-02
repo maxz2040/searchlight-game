@@ -33,12 +33,11 @@ describe('LEVELS', () => {
     }
   })
 
-  it('every level has 5-15 creatures (v1 composited density)', () => {
-    // v0 PRD pinned 3–5 hand-placed creatures. v1 composites 8–13
-    // characters baked into the painting via Higgsfield + Claude-vision
-    // detection (docs/v1-compositing.md), so the bound is wider.
+  it('every level has 4-15 creatures', () => {
+    // Levels 1–5: 7–9 baked-in PNG creatures.
+    // Levels 6–25: 4–7 SVG creatures (Pinhole group has 4, others 5–7).
     for (const level of LEVELS) {
-      expect(level.creatures.length).toBeGreaterThanOrEqual(5)
+      expect(level.creatures.length).toBeGreaterThanOrEqual(4)
       expect(level.creatures.length).toBeLessThanOrEqual(15)
     }
   })

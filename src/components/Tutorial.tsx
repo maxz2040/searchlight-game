@@ -166,6 +166,7 @@ export function Tutorial() {
           onClick={handleBegin}
           className="text-paper/45 text-sm font-semibold underline underline-offset-2 active:text-paper/75 transition-colors duration-[120ms] min-h-[44px] px-4"
           aria-label="Skip tutorial"
+          data-testid="tutorial-skip"
         >
           Skip
         </motion.button>

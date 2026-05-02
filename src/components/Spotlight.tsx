@@ -35,6 +35,8 @@ interface Props {
   activeId?: string;
   onReveal: (creatureId: string) => void;
   children?: React.ReactNode;
+  /** Override dwell time in ms (default DWELL_MS = 900). */
+  dwellMs?: number;
 }
 
 // Dwell-ring geometry (logical px).
@@ -50,7 +52,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RING_R; // ≈ 276.5
 const DWELL_MS         = 900;   // ms to hold still before a creature registers
 const FIND_COOLDOWN_MS = 500;   // ms grace period after a find before next dwell starts
 
-export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal, children }: Props) {
+export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal, children, dwellMs }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -67,10 +69,12 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
   const foundRef     = useRef(found);
   const activeIdRef  = useRef(activeId);
   const onRevealRef  = useRef(onReveal);
+  const dwellMsRef   = useRef(dwellMs ?? DWELL_MS);
   creaturesRef.current = creatures;
   foundRef.current     = found;
   activeIdRef.current  = activeId;
   onRevealRef.current  = onReveal;
+  dwellMsRef.current   = dwellMs ?? DWELL_MS;
 
   const pointerInteractedRef = useRef(false);
 
@@ -196,11 +200,11 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
         if (overlapStart[c.id] == null) overlapStart[c.id] = now;
 
         const elapsed  = now - overlapStart[c.id]!;
-        const progress = Math.min(1, elapsed / DWELL_MS);
+        const progress = Math.min(1, elapsed / dwellMsRef.current);
 
         setRingProgress(cx, cy, progress);
 
-        if (elapsed >= DWELL_MS) {
+        if (elapsed >= dwellMsRef.current) {
           hideRing();
           resetArc();
           lastFoundAt        = now;
@@ -286,7 +290,7 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
       onPointerCancel={handlePointerCancel}
       role="application"
       aria-label="Searchlight play area — drag your finger to find creatures"
-      data-testid="play-surface"
+      data-testid="spotlight-surface"
     >
       {children}
 

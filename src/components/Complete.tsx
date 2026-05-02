@@ -302,6 +302,7 @@ export function Complete() {
           {/* All Worlds — opens level-select lobby */}
           <button
             onClick={goToLobby}
+            data-testid="lobby-btn"
             className="surface-chrome min-h-[60px] min-w-[136px] rounded-full px-6 py-3 text-base font-bold text-paper/80 active:scale-95 transition-transform duration-[120ms] shadow-md"
           >
             All Worlds
