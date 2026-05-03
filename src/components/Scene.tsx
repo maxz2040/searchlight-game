@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Spotlight } from './Spotlight';
 import { Creature } from './Creature';
 import { SceneBackground } from './SceneBackground';
+import { SceneForeground } from './SceneForeground';
 import { useGame } from '../store/gameStore';
 import { playPing } from '../sound';
 import type { Creature as LevelCreature } from '../levels/levels';
@@ -322,6 +323,21 @@ export function Scene() {
             <Creature kind={c.kind} found={true} />
           </motion.div>
         ))}
+
+      {/* Scene foreground — always-visible depth layer (Waldo Edition lvl 26+).
+          Rendered above the spotlight dark-mask so grass/rocks/stalactites
+          occlude creatures positioned inside their zones even when the lantern
+          passes over them, creating genuine "hiding behind the scenery" depth. */}
+      {parseInt(level.id.split('-')[1] ?? '0', 10) >= 26 && (
+        <div
+          aria-hidden
+          data-testid="scene-foreground"
+          className="pointer-events-none absolute inset-0"
+          style={{ zIndex: 9 }}
+        >
+          <SceneForeground scene={level.scene} />
+        </div>
+      )}
 
       {/* Idle hint ring */}
       {hintCreature && (

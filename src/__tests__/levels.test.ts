@@ -34,11 +34,50 @@ describe('LEVELS', () => {
   })
 
   it('every level has 4-15 creatures', () => {
-    // Levels 1–5: 7–9 baked-in PNG creatures.
-    // Levels 6–25: 4–7 SVG creatures (Pinhole group has 4, others 5–7).
+    // Levels 1–5:   7–9 baked-in PNG creatures.
+    // Levels 6–25:  4–7 SVG creatures (Pinhole group has 4, others 5–7).
+    // Levels 26–45: 10–15 SVG creatures (Waldo Edition — full-scene scatter
+    //               with SceneForeground hiding zones).
     for (const level of LEVELS) {
       expect(level.creatures.length).toBeGreaterThanOrEqual(4)
       expect(level.creatures.length).toBeLessThanOrEqual(15)
+    }
+  })
+
+  it('Waldo Edition levels (26–45) each have at least 10 creatures', () => {
+    const waldoLevels = LEVELS.filter((l) => {
+      const n = parseInt(l.id.split('-')[1] ?? '0', 10)
+      return n >= 26
+    })
+    expect(waldoLevels.length).toBe(20)
+    for (const level of waldoLevels) {
+      expect(level.creatures.length).toBeGreaterThanOrEqual(10)
+    }
+  })
+
+  it('Waldo Edition levels use at least one foreground hiding zone per level', () => {
+    // A creature is "in a hiding zone" when its x or y fraction falls inside
+    // a documented foreground region (see SceneForeground.tsx).
+    function inHidingZone(c: { x: number; y: number }, scene: string): boolean {
+      if (scene === 'forest')
+        return c.x <= 0.09 || c.x >= 0.91 || (c.x <= 0.32 && c.y <= 0.12) || c.y >= 0.77
+      if (scene === 'meadow')
+        return c.y >= 0.76 || (c.x <= 0.09 && c.y >= 0.57) || (c.x >= 0.91 && c.y >= 0.59)
+      if (scene === 'beach')
+        return c.y >= 0.80 || (c.x <= 0.13 && c.y >= 0.67) || (c.x >= 0.87 && c.y >= 0.64)
+      if (scene === 'cave')
+        return c.x <= 0.08 || c.x >= 0.92 || c.y <= 0.15 || c.y >= 0.77
+      if (scene === 'snow')
+        return c.y >= 0.79 || (c.x <= 0.11 && c.y >= 0.70) || (c.x >= 0.89 && c.y >= 0.70) || c.y <= 0.14
+      return false
+    }
+    const waldoLevels = LEVELS.filter((l) => {
+      const n = parseInt(l.id.split('-')[1] ?? '0', 10)
+      return n >= 26
+    })
+    for (const level of waldoLevels) {
+      const hiddenCount = level.creatures.filter((c) => inHidingZone(c, level.scene)).length
+      expect(hiddenCount).toBeGreaterThanOrEqual(1)
     }
   })
 
