@@ -126,6 +126,7 @@ function TimerDisplay({ timeLeft, total }: { timeLeft: number; total: number }) 
   return (
     <motion.div
       key={urgent ? 'urgent' : 'normal'}
+      data-testid="timer-display"
       initial={{ scale: urgent ? 1.20 : 1 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 340, damping: 20 }}

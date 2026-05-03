@@ -11,21 +11,39 @@ export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
   expect: { timeout: 8_000 },
-  fullyParallel: false,           // game state is global; serial keeps tests deterministic
+  fullyParallel: false,
+  workers: 1,                     // serial execution — preview server is stable under 1 worker
   retries: 0,
   reporter: [['list']],
   use: {
-    baseURL: 'http://127.0.0.1:8770',
+    baseURL: 'http://127.0.0.1:5000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     headless: true,
     // Force-touch by default — iPad simulation.
     hasTouch: true,
+    // Reduce motion globally so Framer Motion resolves all animations
+    // instantly — prevents toBeVisible() timing out on opacity:0 initial states.
+    reducedMotion: 'reduce',
+    launchOptions: {
+      // NixOS: Chromium headless shell requires these flags so it doesn't
+      // attempt to load GPU / sandbox libraries that aren't available in the
+      // Replit container (libgbm.so.1, etc.).
+      args: [
+        '--disable-gpu',
+        '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-setuid-sandbox',
+      ],
+    },
   },
   webServer: {
-    command: 'npm run build && npm run preview -- --port 8770 --host 127.0.0.1',
-    url: 'http://127.0.0.1:8770',
-    reuseExistingServer: !process.env.CI,
+    // Use the already-running Vite dev server.  `vite preview` (the built-
+    // artefact server on 8770) is killed by the Replit container OOM killer
+    // mid-suite; the dev server managed by the workflow is stable.
+    command: 'npm run dev',
+    url: 'http://127.0.0.1:5000',
+    reuseExistingServer: true,
     timeout: 60_000,
   },
   projects: [

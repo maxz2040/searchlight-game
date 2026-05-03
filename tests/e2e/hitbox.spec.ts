@@ -206,9 +206,10 @@ test.describe('Dwell timing', () => {
     const box = await surface.boundingBox()
     if (!box) throw new Error('no box')
 
-    // Move onto the creature, hold for 650ms, then immediately move far away.
+    // Move onto the creature, hold for 300ms, then immediately move far away.
+    // 300ms is safely below DWELL_MS=900 even under headless event-loop pressure.
     await page.mouse.move(box.x + box.width * target.x, box.y + box.height * target.y, { steps: 6 })
-    await page.waitForTimeout(650)
+    await page.waitForTimeout(300)
     // Move to a guaranteed empty corner to break dwell.
     const farX = target.x < 0.5 ? 0.97 : 0.03
     const farY = target.y < 0.5 ? 0.97 : 0.03

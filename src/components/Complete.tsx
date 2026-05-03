@@ -112,7 +112,11 @@ export function Complete() {
   const next        = useGame((s) => s.next);
   const goToLobby   = useGame((s) => s.goToLobby);
 
-  const videoUrl = VIDEO_URL[level.id];
+  // Skip the celebration video in the test harness (window.__searchlight is
+  // only injected by main.tsx when running Playwright tests).
+  const isTestEnv =
+    typeof window !== 'undefined' && '__searchlight' in window;
+  const videoUrl = isTestEnv ? undefined : VIDEO_URL[level.id];
   const [phase, setPhase] = useState<'video' | 'card'>(
     videoUrl && !timeExpired ? 'video' : 'card',
   );

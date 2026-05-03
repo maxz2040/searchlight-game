@@ -304,7 +304,7 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
       onPointerCancel={handlePointerCancel}
       role="application"
       aria-label="Searchlight play area — drag your finger to find creatures"
-      data-testid="spotlight-surface"
+      data-testid="play-surface"
     >
       {children}
 

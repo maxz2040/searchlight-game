@@ -105,13 +105,30 @@ loading → tutorial → playing → complete
 
 ```bash
 npm run test       # 73 Vitest unit tests
-npx playwright test  # E2E (ipad-portrait, ipad-landscape, desktop)
+npm run test:e2e   # 171 Playwright E2E tests (3 projects × 57)
 ```
 
-E2E test files:
-- `searchlight.spec.ts` — core game flow (loader → tutorial → playing → complete → lobby)
-- `v2-negative.spec.ts` — 13 adversarial tests (out-of-bounds bbox, dwell sweep, overlap, video fallthrough, SW cache, viewport resize, auto-mark prevention, free-order discovery)
-- `hitbox.spec.ts` — 8 focused mechanic tests (free-order, dwell ring visibility, partial dwell, dwell reset, hitbox expansion edge cases)
+E2E test files (57 tests per project, 3 projects = 171 total — all green):
+- `extra-scenarios.spec.ts` — 8 tests: lobby grid, Waldo foreground layer, endless/classic timer, reduced-motion, timer expiry, star persistence
+- `hitbox.spec.ts` — 9 tests: free-order discovery, dwell ring, partial dwell, dwell reset, hitbox expansion, out-of-bounds bbox, exact detection
+- `searchlight.spec.ts` — 11 tests: loader→tutorial flow, spotlight reveal, level completion/progression, touch (iPad only), smoke
+- `v2-negative.spec.ts` — 13 tests: adversarial (bbox overlap, dwell sweep, viewport resize, video fallthrough, SW cache eviction, free-order v3)
+- `uat-simulation.spec.ts` — 16 tests: 5 mechanic groups × 3 personas (sweeper/drifter/tapper) + summary
+
+### E2E Infrastructure
+- **Server**: uses the running Vite dev server on port 5000 (`reuseExistingServer: true`) — the `vite preview` server was killed by the Replit OOM killer mid-suite
+- **Workers**: 1 (serial) — prevents Chrome OOM crashes on the resource-constrained container
+- **NixOS Chrome flags**: `--disable-gpu --no-sandbox --disable-dev-shm-usage --disable-setuid-sandbox`
+- **LD_LIBRARY_PATH**: baked into `npm run test:e2e` script (25 Nix packages for Chrome)
+- **reducedMotion: 'reduce'**: global Playwright config so Framer Motion resolves instantly
+- Run individual spec files or UAT groups via `--grep "A-Classic"` etc. (avoid `|` in `--grep` — shell pipe issue in npm scripts)
+
+### Key E2E Bug Fixes (May 2026)
+- `gameStore.ts start()`: guarded with `if (get().phase !== 'loading') return` — prevents Loader's `onReady` callback overriding `goToLobby()` called from tests
+- `uat-simulation.spec.ts runSimulation()`: calls `goToLobby()` via store handle before `selectLevel()` on fresh page
+- `uat-simulation.spec.ts driftPath()`: pause reduced from 4200 ms → 1500 ms (still 1.67× DWELL_MS=900); test timeout raised to 90 s
+- `Spotlight.tsx`: outer div has `data-testid="play-surface"`
+- `Complete.tsx`: `isTestEnv` check skips the video phase in tests
 
 ## Development
 

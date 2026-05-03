@@ -85,7 +85,7 @@ function driftPath(
   for (let i = 0; i < 30; i++) {
     x = Math.max(30, Math.min(surfaceW - 30, x + (rand() - 0.5) * surfaceW * 0.28));
     y = Math.max(30, Math.min(surfaceH - 30, y + (rand() - 0.5) * surfaceH * 0.28));
-    pts.push({ x: Math.round(x), y: Math.round(y), pauseMs: i % 6 === 0 ? 4200 : 200 });
+    pts.push({ x: Math.round(x), y: Math.round(y), pauseMs: i % 6 === 0 ? 1500 : 200 });
   }
   return pts;
 }
@@ -133,10 +133,19 @@ async function runSimulation(
   persona: 'sweeper' | 'drifter' | 'tapper',
 ): Promise<SimResult> {
   await page.goto('/');
+  // Wait for test handle then navigate to lobby so level cards are visible.
+  await page.waitForFunction(() =>
+    Boolean((window as unknown as { __searchlight?: unknown }).__searchlight),
+  );
+  await page.evaluate(() => {
+    (window as unknown as {
+      __searchlight: { store: { getState(): { goToLobby(): void } } }
+    }).__searchlight.store.getState().goToLobby();
+  });
   await selectLevel(page, levelId);
   await waitForPlayPhase(page);
 
-  const surface = page.locator('[data-testid="spotlight-surface"]');
+  const surface = page.locator('[data-testid="play-surface"]');
   const box     = await surface.boundingBox();
   if (!box) throw new Error('Could not find spotlight surface');
 
@@ -210,6 +219,8 @@ const results: SimResult[] = [];
 
 test.describe('UAT split-test simulation @uat', () => {
   test.skip(SKIP, 'Set SKIP_UAT=0 to run UAT simulations locally');
+  // Each persona simulation can run up to 90 s (drifter has 4.2 s pauses).
+  test.setTimeout(90_000);
 
   test.beforeEach(async ({ page }) => {
     // Start from a clean localStorage state.

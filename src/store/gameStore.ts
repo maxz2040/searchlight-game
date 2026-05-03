@@ -110,6 +110,7 @@ export const useGame = create<GameState>((set, get) => ({
   },
 
   start() {
+    if (get().phase !== 'loading') return;
     set({ phase: 'tutorial' });
   },
   beginPlaying() {
