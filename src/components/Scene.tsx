@@ -169,6 +169,10 @@ export function Scene() {
 
   const isEndless = level.timeLimit >= 9000;
 
+  // Pinhole levels (spotlight ≤ 0.11) get an earlier hint ring because the
+  // tiny beam means toddlers need guidance sooner.
+  const hintDelayMs = level.spotlight <= 0.11 ? 2500 : 3500;
+
   // ── Countdown timer ──────────────────────────────────────────────────────
   const [timeLeft, setTimeLeft] = useState(level.timeLimit);
 
@@ -204,7 +208,7 @@ export function Scene() {
     idleTimer.current = window.setTimeout(() => {
       const next = level.creatures.find((c) => !found.has(c.id));
       if (next) setHintFor(next.id);
-    }, 3500);
+    }, hintDelayMs);
   }
 
   useEffect(() => {
@@ -262,6 +266,7 @@ export function Scene() {
         activeId={activeTarget?.id}
         onReveal={onReveal}
         dwellMs={level.dwellMs}
+        tintVariant={isEndless ? 'teal' : 'amber'}
       >
         <SceneBackground scene={level.scene} />
 

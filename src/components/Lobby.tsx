@@ -60,6 +60,9 @@ const LEVEL_META: Record<string, LevelMeta> = {
   'lvl-25': { num: 25, difficulty: 'Endless',     diffColor: '#f08060' },
 };
 
+// First level of each mechanic group — gets a ⭐ "Best Start" badge.
+const BEST_START = new Set(['lvl-6', 'lvl-10', 'lvl-14', 'lvl-18', 'lvl-22']);
+
 // Deterministic sparkle positions.
 const SPARKLES = [
   { x:  6, y: 18, s: 3, d: 3.5, delay: 0.0  },
@@ -200,6 +203,12 @@ function LevelCard({
             }}
           >
             {meta.difficulty}
+          </div>
+        )}
+        {/* Best-start star — first level of each mechanic group */}
+        {BEST_START.has(levelId) && (
+          <div className="absolute bottom-2 right-2 rounded-full bg-spotlight-edge/90 px-1.5 py-0.5 text-[0.65rem] font-black text-night-deep shadow-md backdrop-blur-sm">
+            ⭐ Best Start
           </div>
         )}
       </div>

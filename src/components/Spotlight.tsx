@@ -37,6 +37,8 @@ interface Props {
   children?: React.ReactNode;
   /** Override dwell time in ms (default DWELL_MS = 900). */
   dwellMs?: number;
+  /** 'teal' shifts the spotlight mid-tones to cyan/teal for Endless levels. */
+  tintVariant?: 'amber' | 'teal';
 }
 
 // Dwell-ring geometry (logical px).
@@ -52,7 +54,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RING_R; // ≈ 276.5
 const DWELL_MS         = 900;   // ms to hold still before a creature registers
 const FIND_COOLDOWN_MS = 500;   // ms grace period after a find before next dwell starts
 
-export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal, children, dwellMs }: Props) {
+export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal, children, dwellMs, tintVariant = 'amber' }: Props) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -69,12 +71,14 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
   const foundRef     = useRef(found);
   const activeIdRef  = useRef(activeId);
   const onRevealRef  = useRef(onReveal);
-  const dwellMsRef   = useRef(dwellMs ?? DWELL_MS);
-  creaturesRef.current = creatures;
-  foundRef.current     = found;
-  activeIdRef.current  = activeId;
-  onRevealRef.current  = onReveal;
-  dwellMsRef.current   = dwellMs ?? DWELL_MS;
+  const dwellMsRef     = useRef(dwellMs ?? DWELL_MS);
+  const tintVariantRef = useRef(tintVariant);
+  creaturesRef.current    = creatures;
+  foundRef.current        = found;
+  activeIdRef.current     = activeId;
+  onRevealRef.current     = onReveal;
+  dwellMsRef.current      = dwellMs ?? DWELL_MS;
+  tintVariantRef.current  = tintVariant;
 
   const pointerInteractedRef = useRef(false);
 
@@ -101,12 +105,14 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
     const cx = x.get();
     const cy = y.get();
     const r  = radiusPx.get();
+    const isTeal = tintVariantRef.current === 'teal';
     el.style.background =
       `radial-gradient(circle ${r}px at ${cx}px ${cy}px, ` +
-      `rgba(255, 248, 215, 0) 0%, `        +
-      `rgba(255, 222, 130, 0.07) 52%, `    +
-      `rgba(255, 160, 50, 0.04) 66%, `     +
-      `rgba(8, 11, 27, 0.91) 76%, `        +
+      `rgba(255, 248, 215, 0) 0%, `                                                               +
+      (isTeal
+        ? `rgba(56, 224, 210, 0.09) 52%, rgba(0, 180, 200, 0.05) 66%, `
+        : `rgba(255, 222, 130, 0.07) 52%, rgba(255, 160, 50,  0.04) 66%, `)                       +
+      `rgba(8, 11, 27, 0.91) 76%, `                                                               +
       `rgba(3, 5, 18, 0.97) 100%)`;
   }
 

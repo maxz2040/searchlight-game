@@ -213,6 +213,77 @@ button:focus-visible { outline-offset: 4px; }
 }
 
 /* ---------------------------------------------------------------------------
+   Creature character animations — each kind gets one that matches its
+   personality. Applied via <g className="creature-{type}"> in SVG files.
+   transform-box: fill-box keeps the origin inside the SVG viewport.       */
+
+@keyframes creature-bob {
+  0%, 100% { transform: translateY(0px);  }
+  50%      { transform: translateY(-5px); }
+}
+.creature-bob {
+  animation: creature-bob 2.4s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: center;
+}
+
+@keyframes creature-wiggle {
+  0%, 100% { transform: rotate(0deg);  }
+  25%      { transform: rotate(-7deg); }
+  75%      { transform: rotate(7deg);  }
+}
+.creature-wiggle {
+  animation: creature-wiggle 1.6s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: center bottom;
+}
+
+@keyframes creature-flutter {
+  0%, 100% { transform: translateY(0px)  scaleX(1);    }
+  30%      { transform: translateY(-4px) scaleX(0.93); }
+  70%      { transform: translateY(-2px) scaleX(1.05); }
+}
+.creature-flutter {
+  animation: creature-flutter 0.85s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: center;
+}
+
+@keyframes creature-spin-slow {
+  0%   { transform: rotate(0deg);   }
+  100% { transform: rotate(360deg); }
+}
+.creature-spin-slow {
+  animation: creature-spin-slow 9s linear infinite;
+  transform-box: fill-box; transform-origin: center;
+}
+
+@keyframes creature-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1;    }
+  50%      { transform: scale(1.09); opacity: 0.90; }
+}
+.creature-pulse {
+  animation: creature-pulse 2.2s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: center;
+}
+
+@keyframes creature-bounce-hop {
+  0%, 100% { transform: translateY(0px)  scaleY(1)    scaleX(1);    }
+  40%      { transform: translateY(-7px) scaleY(1.07) scaleX(0.94); }
+  68%      { transform: translateY(2px)  scaleY(0.94) scaleX(1.05); }
+}
+.creature-bounce-hop {
+  animation: creature-bounce-hop 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-box: fill-box; transform-origin: center bottom;
+}
+
+@keyframes creature-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50%      { transform: rotate(5deg);  }
+}
+.creature-sway {
+  animation: creature-sway 3.2s ease-in-out infinite;
+  transform-box: fill-box; transform-origin: center top;
+}
+
+/* ---------------------------------------------------------------------------
    Reduced-motion: degrade gracefully. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -230,5 +301,12 @@ button:focus-visible { outline-offset: 4px; }
   .animate-slot-found {
     animation: reveal-pop 0.001ms linear both !important;
     opacity: 1 !important;
+  }
+  /* Creature personality animations — stop on reduced-motion */
+  .creature-bob, .creature-wiggle, .creature-flutter,
+  .creature-spin-slow, .creature-pulse,
+  .creature-bounce-hop, .creature-sway {
+    animation: none !important;
+    transform: none !important;
   }
 }

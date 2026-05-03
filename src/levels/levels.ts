@@ -14,6 +14,10 @@
 // avoid overlapping with baked-in sprites that occupy the lower half in
 // levels 1–5 when the same scene PNG is reused.
 
+// Import roster-derived type so the 100-character union is the single source
+// of truth for all SVG kinds. PNG kinds are listed explicitly below.
+import type { CreatureKind as RosterKind } from '../creatures/roster';
+
 export type CreatureKind =
   // ── Original PNG kinds (baked into scene backgrounds) ──────────────────
   | 'leaf-pup'
@@ -24,19 +28,8 @@ export type CreatureKind =
   | 'shroom-buddy'
   | 'pebble-pal'
   | 'star-fish'
-  // ── SVG kinds (rendered inline, no assets) ──────────────────────────────
-  | 'bunny'
-  | 'bear-cub'
-  | 'owl'
-  | 'frog-pal'
-  | 'bee-buzz'
-  | 'kitty'
-  | 'turtle-shell'
-  | 'star-pal'
-  | 'moon-kid'
-  | 'fox-pup'
-  | 'penguin-pal'
-  | 'duck-bill';
+  // ── All 100 SVG kinds via the roster (covers original 12 + 88 new) ─────
+  | RosterKind;
 
 export interface Creature {
   id: string;
