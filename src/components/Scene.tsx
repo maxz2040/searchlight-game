@@ -178,6 +178,8 @@ export function Scene() {
   const [timeLeft, setTimeLeft] = useState(level.timeLimit);
 
   useEffect(() => {
+    // Sync timer when the level changes — intentional setState-in-effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTimeLeft(level.timeLimit);
   }, [level.id, level.timeLimit]);
 
@@ -213,6 +215,8 @@ export function Scene() {
   }
 
   useEffect(() => {
+    // Reset idle hint whenever the level or found-set changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     bumpIdle();
     return () => { if (idleTimer.current) window.clearTimeout(idleTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -242,7 +246,9 @@ export function Scene() {
   );
 
   useEffect(() => {
-    return () => { burstTimeout.current.forEach((tid) => window.clearTimeout(tid)); };
+    // Capture ref value so the cleanup closure is stable.
+    const timeouts = burstTimeout.current;
+    return () => { timeouts.forEach((tid) => window.clearTimeout(tid)); };
   }, []);
 
   const total        = level.creatures.length;

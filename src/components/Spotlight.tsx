@@ -73,11 +73,19 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
   const onRevealRef  = useRef(onReveal);
   const dwellMsRef     = useRef(dwellMs ?? DWELL_MS);
   const tintVariantRef = useRef(tintVariant);
+  // Synchronously update refs so the rAF loop always sees latest props
+  // without needing them in the effect dependency array.
+  // eslint-disable-next-line react-hooks/refs
   creaturesRef.current    = creatures;
+  // eslint-disable-next-line react-hooks/refs
   foundRef.current        = found;
+  // eslint-disable-next-line react-hooks/refs
   activeIdRef.current     = activeId;
+  // eslint-disable-next-line react-hooks/refs
   onRevealRef.current     = onReveal;
+  // eslint-disable-next-line react-hooks/refs
   dwellMsRef.current      = dwellMs ?? DWELL_MS;
+  // eslint-disable-next-line react-hooks/refs
   tintVariantRef.current  = tintVariant;
 
   const pointerInteractedRef = useRef(false);

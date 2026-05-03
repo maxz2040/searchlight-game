@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // SvgCreature — 12 original inline SVG characters + 88 new ones via batch files.
 // All shapes are original artwork, no external assets required.
 // Each fits a 100×100 viewBox. The CSS filter in Creature.tsx handles the
