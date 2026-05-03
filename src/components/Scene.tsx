@@ -171,7 +171,7 @@ export function Scene() {
 
   // Pinhole levels (spotlight ≤ 0.11) get an earlier hint ring because the
   // tiny beam means toddlers need guidance sooner.
-  const hintDelayMs = level.spotlight <= 0.11 ? 2500 : 3500;
+  const hintDelayMs = level.hintMs ?? (level.spotlight <= 0.11 ? 2500 : 3500);
 
   // ── Countdown timer ──────────────────────────────────────────────────────
   const [timeLeft, setTimeLeft] = useState(level.timeLimit);

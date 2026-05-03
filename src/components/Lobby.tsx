@@ -58,10 +58,39 @@ const LEVEL_META: Record<string, LevelMeta> = {
   'lvl-23': { num: 23, difficulty: 'Endless',     diffColor: '#f08060' },
   'lvl-24': { num: 24, difficulty: 'Endless',     diffColor: '#f08060' },
   'lvl-25': { num: 25, difficulty: 'Endless',     diffColor: '#f08060' },
+  // ── WALDO EDITION ────────────────────────────────────────────────────────
+  // ── Group F — Waldo Classic ──────────────────────────────────────────────
+  'lvl-26': { num: 26, difficulty: 'Waldo Classic',     diffColor: '#5ec48a' },
+  'lvl-27': { num: 27, difficulty: 'Waldo Classic',     diffColor: '#5ec48a' },
+  'lvl-28': { num: 28, difficulty: 'Waldo Classic',     diffColor: '#5ec48a' },
+  'lvl-29': { num: 29, difficulty: 'Waldo Classic',     diffColor: '#5ec48a' },
+  // ── Group G — Waldo Quick Dwell ──────────────────────────────────────────
+  'lvl-30': { num: 30, difficulty: 'Waldo Quick',       diffColor: '#e0c030' },
+  'lvl-31': { num: 31, difficulty: 'Waldo Quick',       diffColor: '#e0c030' },
+  'lvl-32': { num: 32, difficulty: 'Waldo Quick',       diffColor: '#e0c030' },
+  'lvl-33': { num: 33, difficulty: 'Waldo Quick',       diffColor: '#e0c030' },
+  // ── Group H — Waldo Wide Beam ────────────────────────────────────────────
+  'lvl-34': { num: 34, difficulty: 'Waldo Wide',        diffColor: '#38a8d8' },
+  'lvl-35': { num: 35, difficulty: 'Waldo Wide',        diffColor: '#38a8d8' },
+  'lvl-36': { num: 36, difficulty: 'Waldo Wide',        diffColor: '#38a8d8' },
+  'lvl-37': { num: 37, difficulty: 'Waldo Wide',        diffColor: '#38a8d8' },
+  // ── Group I — Waldo Pinhole ──────────────────────────────────────────────
+  'lvl-38': { num: 38, difficulty: 'Waldo Pinhole',     diffColor: '#b870d8' },
+  'lvl-39': { num: 39, difficulty: 'Waldo Pinhole',     diffColor: '#b870d8' },
+  'lvl-40': { num: 40, difficulty: 'Waldo Pinhole',     diffColor: '#b870d8' },
+  'lvl-41': { num: 41, difficulty: 'Waldo Pinhole',     diffColor: '#b870d8' },
+  // ── Group J — Waldo Endless ──────────────────────────────────────────────
+  'lvl-42': { num: 42, difficulty: 'Waldo Endless',     diffColor: '#e86848' },
+  'lvl-43': { num: 43, difficulty: 'Waldo Endless',     diffColor: '#e86848' },
+  'lvl-44': { num: 44, difficulty: 'Waldo Endless',     diffColor: '#e86848' },
+  'lvl-45': { num: 45, difficulty: 'Waldo Endless',     diffColor: '#e86848' },
 };
 
 // First level of each mechanic group — gets a ⭐ "Best Start" badge.
-const BEST_START = new Set(['lvl-6', 'lvl-10', 'lvl-14', 'lvl-18', 'lvl-22']);
+const BEST_START = new Set([
+  'lvl-6',  'lvl-10', 'lvl-14', 'lvl-18', 'lvl-22',
+  'lvl-26', 'lvl-30', 'lvl-34', 'lvl-38', 'lvl-42',
+]);
 
 // Deterministic sparkle positions.
 const SPARKLES = [
