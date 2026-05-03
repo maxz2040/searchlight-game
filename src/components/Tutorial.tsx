@@ -54,9 +54,9 @@ export function Tutorial() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
       transition={ENTRY}
       className="surface-overlay absolute inset-0 z-20 flex flex-col items-center justify-center overflow-hidden"
     >
@@ -120,7 +120,7 @@ export function Tutorial() {
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ ...ENTRY, delay: 0.22 }}
-          className="font-display text-[2.6rem] font-bold text-paper leading-[1.08]"
+          className="font-display text-[2.369rem] font-bold text-paper leading-[1.08]"
         >
           Find the<br />hidden friends
         </motion.h1>

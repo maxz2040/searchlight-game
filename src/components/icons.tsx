@@ -104,30 +104,82 @@ export function PlayIcon(props: Props) {
 }
 
 /**
- * Lantern bloom — celebration crown on Complete card.
+ * Confetti trophy — celebration icon on Complete card.
+ * Redesigned for maximum celebration energy: a warm radiant trophy surrounded
+ * by colourful confetti bursts and floating dots.
  * All colours are sRGB hex (computed from the OKLCH design tokens above)
  * so they render correctly on Safari < 15.4 where oklch() is unsupported
  * in SVG fill attributes.
  */
 export function ConfettiIcon(props: Props) {
-  // sRGB hex equivalents of the OKLCH design-system primitives.
   const c100 = '#f8eedd';  // lantern-100 / spotlight-warm
   const c200 = '#ead9a8';  // lantern-200
   const c300 = '#e0c87a';  // lantern-300
   const c500 = '#d4a73c';  // lantern-500 / spotlight-edge
   const c700 = '#a07828';  // lantern-700 / accent
+  // Celebration colours for confetti bursts
+  const red    = '#f87171';
+  const green  = '#86efac';
+  const blue   = '#93c5fd';
+  const purple = '#c4b5fd';
   return (
-    <svg viewBox="0 0 64 64" fill="none" {...props}>
-      <circle cx="32" cy="32" r="14" fill={c100} />
-      <circle cx="32" cy="32" r="9"  fill={c500} />
-      <path d="M32 32 L 12 8"  stroke={c700} strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M32 32 L 56 12" stroke={c500} strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M32 32 L 8 36"  stroke={c300} strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M32 32 L 58 50" stroke={c700} strokeWidth="3.5" strokeLinecap="round" />
-      <circle cx="11" cy="11" r="2.5" fill={c700} />
-      <circle cx="55" cy="14" r="2.2" fill={c500} />
-      <circle cx="9"  cy="38" r="2.2" fill={c200} />
-      <circle cx="56" cy="50" r="2.4" fill={c500} />
+    <svg viewBox="0 0 96 96" fill="none" {...props}>
+      {/* Outer warm glow ring */}
+      <circle cx="48" cy="48" r="38" fill={c500} opacity="0.10" />
+      <circle cx="48" cy="48" r="29" fill={c500} opacity="0.14" />
+
+      {/* Trophy cup body */}
+      <path
+        d="M34 28 L34 52 Q34 62 48 62 Q62 62 62 52 L62 28 Z"
+        fill={c300}
+        stroke={c700}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Trophy cup shine */}
+      <path
+        d="M38 32 L38 50 Q38 58 48 58"
+        stroke={c100}
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+      {/* Trophy handles */}
+      <path d="M34 34 Q24 34 24 42 Q24 50 34 50" stroke={c700} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M62 34 Q72 34 72 42 Q72 50 62 50" stroke={c700} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      {/* Trophy base stem */}
+      <rect x="43" y="62" width="10" height="7" rx="1.5" fill={c700} />
+      {/* Trophy base plate */}
+      <rect x="36" y="68" width="24" height="5" rx="2.5" fill={c700} />
+      {/* Star on cup */}
+      <path
+        d="M48 36 L50 41.5 L56 42 L51.5 46 L53 52 L48 49 L43 52 L44.5 46 L40 42 L46 41.5 Z"
+        fill={c100}
+        opacity="0.90"
+      />
+
+      {/* Confetti bursts — scattered around the trophy */}
+      <rect x="14" y="14" width="6" height="6" rx="1.5" fill={red}    transform="rotate(20 17 17)" />
+      <rect x="74" y="12" width="5" height="5" rx="1.2" fill={green}  transform="rotate(-15 77 15)" />
+      <rect x="10" y="56" width="5" height="5" rx="1.2" fill={blue}   transform="rotate(35 13 59)" />
+      <rect x="76" y="58" width="6" height="6" rx="1.5" fill={purple} transform="rotate(-25 79 61)" />
+      <rect x="22" y="72" width="5" height="5" rx="1.2" fill={c300}   transform="rotate(10 25 75)" />
+      <rect x="66" y="74" width="5" height="5" rx="1.2" fill={red}    transform="rotate(40 69 77)" />
+
+      {/* Floating sparkle dots */}
+      <circle cx="20" cy="30" r="3"   fill={c200}  />
+      <circle cx="76" cy="28" r="2.5" fill={green} />
+      <circle cx="16" cy="70" r="2.5" fill={purple}/>
+      <circle cx="80" cy="72" r="3"   fill={c500}  />
+      <circle cx="48" cy="10" r="2.5" fill={red}   />
+      <circle cx="30" cy="82" r="2"   fill={blue}  />
+      <circle cx="66" cy="82" r="2"   fill={c300}  />
+
+      {/* Streamers */}
+      <path d="M22 22 Q30 16 28 8"  stroke={red}    strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M74 20 Q68 14 72 8"  stroke={blue}   strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M18 48 Q10 42 12 34" stroke={green}  strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M78 46 Q86 40 84 32" stroke={purple} strokeWidth="2.5" strokeLinecap="round" fill="none" />
     </svg>
   );
 }

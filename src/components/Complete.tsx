@@ -182,9 +182,10 @@ export function Complete() {
   // ── Card phase ─────────────────────────────────────────────────────────
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.46, ease: [0.16, 1, 0.3, 1] }}
       className="surface-overlay absolute inset-0 z-30 flex flex-col items-center justify-center overflow-hidden safe-bottom safe-top py-8"
     >
       {/* Ambient sparkle particles */}
@@ -251,7 +252,7 @@ export function Complete() {
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.14, duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
-          className={`font-display text-[2.6rem] font-bold leading-[1.06] ${
+          className={`font-display text-[2.369rem] font-bold leading-[1.06] ${
             timeExpired ? 'text-red-300' : 'text-paper'
           }`}
         >
@@ -321,13 +322,13 @@ export function Complete() {
             onClick={next}
             className="relative inline-flex min-h-[60px] min-w-[148px] items-center justify-center gap-2 overflow-hidden rounded-full bg-accent px-7 py-3 text-lg font-bold text-paper shadow-[0_4px_20px_rgba(160,120,40,0.45)] active:scale-95 transition-transform duration-[120ms]"
           >
-            {/* Shimmer sweep */}
+            {/* Shimmer sweep — offset delay so it's out-of-phase with Tutorial */}
             <span
               className="pointer-events-none absolute inset-0 rounded-full"
               style={{
                 background:
                   'linear-gradient(90deg, transparent 0%, rgba(255,248,210,0.28) 50%, transparent 100%)',
-                animation: 'shimmer-sweep 2.4s ease-in-out infinite',
+                animation: 'shimmer-sweep 2.4s ease-in-out 0.8s infinite',
               }}
             />
             <span className="relative">Next level</span>

@@ -1,11 +1,13 @@
 // Loader — "Lighting the lantern…" splash.
-// Visual uplift v3:
+// Visual uplift v4:
+//   * Staggered entrance: lantern springs in, text and bar fade up with delay.
 //   * Ambient sparkle particles float in the background.
 //   * Progress bar uses a warm amber → ivory gradient fill.
 //   * Fixed: shadow-[] uses sRGB rgba instead of oklch() which Safari < 15.4
 //     can't parse inside arbitrary Tailwind values.
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { LanternIcon } from './icons';
 
 interface Props {
@@ -78,8 +80,13 @@ export function Loader({ onReady }: Props) {
 
       <div className="relative flex flex-col items-center gap-8 z-10">
 
-        {/* Lantern icon with layered halos */}
-        <div className="relative h-36 w-36">
+        {/* Lantern icon — springs in on mount */}
+        <motion.div
+          className="relative h-36 w-36"
+          initial={{ scale: 0.72, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 220, damping: 24, delay: 0.05 }}
+        >
           <div className="absolute inset-[-35%] rounded-full bg-spotlight-warm/14 blur-3xl animate-pulse-soft" />
           <div className="absolute inset-[-16%] rounded-full bg-spotlight-warm/28 blur-2xl animate-pulse-soft"
                style={{ animationDelay: '0.4s' }} />
@@ -88,20 +95,29 @@ export function Loader({ onReady }: Props) {
           <div className="relative flex h-full w-full items-center justify-center rounded-full bg-spotlight-edge text-night-deep shadow-[0_0_64px_rgba(212,167,60,0.55),0_0_24px_rgba(212,167,60,0.35)]">
             <LanternIcon className="h-18 w-18" style={{ width: 72, height: 72 }} />
           </div>
-        </div>
+        </motion.div>
 
-        <p className="font-display text-[1.778rem] font-semibold text-paper tracking-[-0.005em]">
+        {/* Text fades up after lantern appears */}
+        <motion.p
+          className="font-display text-[1.778rem] font-semibold text-paper tracking-[-0.005em]"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.44, ease: [0.16, 1, 0.3, 1], delay: 0.28 }}
+        >
           Lighting the lantern&hellip;
-        </p>
+        </motion.p>
 
-        {/* Progress bar — gradient fill */}
-        <div
+        {/* Progress bar — fades in then gradient fills */}
+        <motion.div
           className="h-2.5 w-60 overflow-hidden rounded-full surface-chrome-strong"
           role="progressbar"
           aria-label="Loading"
           aria-valuenow={progress}
           aria-valuemin={0}
           aria-valuemax={100}
+          initial={{ opacity: 0, scaleX: 0.88 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ duration: 0.36, ease: [0.16, 1, 0.3, 1], delay: 0.40 }}
         >
           <div
             className="h-full rounded-full transition-[width] duration-[260ms]"
@@ -111,7 +127,7 @@ export function Loader({ onReady }: Props) {
               background: 'linear-gradient(90deg, #a07828 0%, #d4a73c 50%, #f8eedd 100%)',
             }}
           />
-        </div>
+        </motion.div>
       </div>
     </div>
   );

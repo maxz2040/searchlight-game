@@ -182,7 +182,8 @@ function LevelCard({
       initial={{ opacity: 0, y: 36, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: 0.06 + (index % 10) * 0.06, duration: 0.52, ease: EASE }}
-      whileTap={{ scale: 0.97 }}
+      whileTap={{ scale: 0.96 }}
+      whileHover={{ y: -2 }}
       onClick={() => onSelect(levelId)}
       data-testid={`level-card-${levelId}`}
       className={`relative flex flex-col overflow-hidden rounded-3xl shadow-2xl focus:outline-none ${
@@ -323,7 +324,7 @@ export function Lobby() {
         transition={{ duration: 0.44, ease: EASE }}
         className="relative z-10 mt-8 mb-5 flex flex-col items-center gap-2"
       >
-        <h1 className="font-display text-[2.2rem] font-bold text-paper leading-none tracking-[-0.01em]">
+        <h1 className="font-display text-[2.369rem] font-bold text-paper leading-none tracking-[-0.01em]">
           Choose Your World
         </h1>
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-paper/45">

@@ -33,6 +33,9 @@ const FOUND_FILTER =
 const HIDDEN_FILTER =
   'brightness(0.22) saturate(0.15) sepia(0.4) hue-rotate(200deg) opacity(0.95)';
 
+// Smooth transition when a creature goes from hidden → found.
+const FILTER_TRANSITION = 'filter 320ms cubic-bezier(0.16, 1, 0.3, 1)';
+
 export function Creature({ kind, found }: Props) {
   const filter = found ? FOUND_FILTER : HIDDEN_FILTER;
 
@@ -41,7 +44,7 @@ export function Creature({ kind, found }: Props) {
       <SvgCreature
         kind={kind}
         className="select-none pointer-events-none"
-        style={{ filter }}
+        style={{ filter, transition: FILTER_TRANSITION }}
       />
     );
   }
@@ -59,7 +62,7 @@ export function Creature({ kind, found }: Props) {
       width={256}
       height={256}
       className="h-full w-full object-contain select-none pointer-events-none"
-      style={{ filter }}
+      style={{ filter, transition: FILTER_TRANSITION }}
     />
   );
 }

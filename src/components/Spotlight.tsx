@@ -324,7 +324,7 @@ export function Spotlight({ radiusFraction, creatures, found, activeId, onReveal
           cy={RING_CX}
           r={RING_R}
           fill="none"
-          stroke="rgba(212,167,60,0.25)"
+          stroke="rgba(212,167,60,0.38)"
           strokeWidth={RING_STROKE}
         />
         <circle

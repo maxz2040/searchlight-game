@@ -86,26 +86,29 @@ function FoundBurst({ bursts }: { bursts: BurstEntry[] }) {
         </div>
       ))}
 
-      {/* Name labels — spring-bounce in, float up and fade */}
+      {/* Name labels — each wrapped in its own AnimatePresence so exit fires
+          when the burst entry is removed from the bursts array.           */}
       {bursts.map((b) => (
-        <motion.div
-          key={`label-${b.id}`}
-          className="pointer-events-none absolute z-20"
-          style={{
-            left: `${b.x * 100}%`,
-            top:  `${b.y * 100}%`,
-            transform: 'translate(-50%, -175%)',
-          }}
-          initial={{ opacity: 0, y: 18, scale: 0.6 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.88 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 24, delay: 0.1 }}
-        >
-          <div className="surface-chrome-strong flex items-center gap-1.5 rounded-full px-4 py-1.5 text-base font-bold text-paper shadow-2xl whitespace-nowrap">
-            <SparkleIcon className="h-4 w-4 text-spotlight-edge shrink-0" />
-            {b.name}
-          </div>
-        </motion.div>
+        <AnimatePresence key={`label-ap-${b.id}`}>
+          <motion.div
+            key={`label-${b.id}`}
+            className="pointer-events-none absolute z-20"
+            style={{
+              left: `${b.x * 100}%`,
+              top:  `${b.y * 100}%`,
+              transform: 'translate(-50%, -175%)',
+            }}
+            initial={{ opacity: 0, y: 18, scale: 0.6 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -14, scale: 0.84 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 24, delay: 0.1 }}
+          >
+            <div className="surface-chrome-strong flex items-center gap-1.5 rounded-full px-4 py-1.5 text-base font-bold text-paper shadow-2xl whitespace-nowrap">
+              <SparkleIcon className="h-4 w-4 text-spotlight-edge shrink-0" />
+              {b.name}
+            </div>
+          </motion.div>
+        </AnimatePresence>
       ))}
     </>
   );
@@ -148,7 +151,7 @@ function TimerDisplay({ timeLeft, total }: { timeLeft: number; total: number }) 
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-paper/15">
         <motion.div
-          className={`h-full rounded-full ${urgent ? 'bg-red-400' : 'bg-spotlight-edge'}`}
+          className={`h-full rounded-full transition-colors duration-[420ms] ${urgent ? 'bg-red-400' : 'bg-spotlight-edge'}`}
           animate={{ width: `${pct * 100}%` }}
           transition={{ duration: 0.85, ease: 'linear' }}
         />
@@ -346,25 +349,32 @@ export function Scene() {
         </div>
       )}
 
-      {/* Idle hint ring */}
-      {hintCreature && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute animate-hint-pulse"
-          style={{
-            left:         `${hintCreature.x * 100}%`,
-            top:          `${hintCreature.y * 100}%`,
-            width:        `${Math.max(hintCreature.w, hintCreature.h) * 160}%`,
-            height:       `${Math.max(hintCreature.w, hintCreature.h) * 160}%`,
-            transform:    'translate(-50%, -50%)',
-            zIndex:       8,
-            borderRadius: '50%',
-            background:   'rgba(212,167,60,0.14)',
-            border:       '3px solid rgba(212,167,60,0.55)',
-            boxShadow:    '0 0 32px rgba(212,167,60,0.50), 0 0 12px rgba(212,167,60,0.30)',
-          }}
-        />
-      )}
+      {/* Idle hint ring — fades in via AnimatePresence so it never snaps */}
+      <AnimatePresence>
+        {hintCreature && (
+          <motion.div
+            key={`hint-${hintCreature.id}`}
+            aria-hidden
+            className="pointer-events-none absolute animate-hint-pulse"
+            initial={{ opacity: 0, scale: 1.3 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.15 }}
+            transition={{ duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              left:         `${hintCreature.x * 100}%`,
+              top:          `${hintCreature.y * 100}%`,
+              width:        `${Math.max(hintCreature.w, hintCreature.h) * 160}%`,
+              height:       `${Math.max(hintCreature.w, hintCreature.h) * 160}%`,
+              transform:    'translate(-50%, -50%)',
+              zIndex:       8,
+              borderRadius: '50%',
+              background:   'rgba(212,167,60,0.14)',
+              border:       '3px solid rgba(212,167,60,0.55)',
+              boxShadow:    '0 0 32px rgba(212,167,60,0.50), 0 0 12px rgba(212,167,60,0.30)',
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <div aria-live="polite" aria-atomic="true" className="sr-only" id="find-announce" />
 
