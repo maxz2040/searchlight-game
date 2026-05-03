@@ -223,7 +223,7 @@ export function Complete() {
           initial={{ scale: 0.80, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 26 }}
-          className="relative h-24 w-24"
+          className="relative h-28 w-28"
         >
           <div
             className={`absolute inset-[-18%] rounded-full blur-3xl animate-pulse-soft ${
@@ -274,7 +274,7 @@ export function Complete() {
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.32, duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
-          className="surface-chrome-strong grid grid-cols-5 gap-3 rounded-3xl p-4 shadow-xl"
+          className="surface-chrome-strong flex flex-wrap justify-center gap-3 rounded-3xl p-4 shadow-xl"
         >
           {level.creatures.map((c, i) => (
             <motion.div

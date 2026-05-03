@@ -111,6 +111,19 @@ export function PlayIcon(props: Props) {
  * so they render correctly on Safari < 15.4 where oklch() is unsupported
  * in SVG fill attributes.
  */
+export function PawIcon(props: Props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+      {/* Two top toe-pads */}
+      <ellipse cx="5.5"  cy="4.5" rx="2.2" ry="2.8" />
+      <ellipse cx="10"   cy="3.2" rx="2.2" ry="2.8" />
+      <ellipse cx="14.5" cy="4.5" rx="2.2" ry="2.8" />
+      {/* Main palm pad */}
+      <path d="M4.5 9.5 Q2 12.5 3.5 15.5 Q5 18 10 17.5 Q15 18 16.5 15.5 Q18 12.5 15.5 9.5 Q13 7.5 10 7.8 Q7 7.5 4.5 9.5Z" />
+    </svg>
+  );
+}
+
 export function ConfettiIcon(props: Props) {
   const c100 = '#f8eedd';  // lantern-100 / spotlight-warm
   const c200 = '#ead9a8';  // lantern-200

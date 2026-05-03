@@ -90,6 +90,23 @@ loading → tutorial → playing → complete
 - **Colours in JS/SVG**: sRGB hex ONLY — `#d4a73c` (spotlight-edge), `#a07828` (accent), `rgba(245,238,222,x)` (paper). Never oklch() in attribute strings (Safari < 15.4)
 - **Animations**: expo-out `cubic-bezier(0.16,1,0.3,1)` everywhere; Framer Motion springs for celebratory pops
 - **Particles**: deterministic `SPARKLES` arrays (no Math.random) in Loader, Tutorial, Complete, Lobby — animated via `animate-float-particle` CSS class with `--dur` custom property per particle
+- **Icons**: All inline SVG — `PawIcon`, `PlayIcon`, `ConfettiIcon`, `ArrowRightIcon`, `StarIcon`, `LanternIcon`. NO emoji used anywhere (emoji render as empty boxes in headless Chrome / some Android/Windows devices)
+
+## Polish Fixes (May 2026)
+
+- **FoundBurst**: AnimatePresence wraps each burst entry for proper exit animation
+- **Creature filter transition**: 320ms ease on CSS `filter` property
+- **Loader stagger**: lantern spring-in → text fade → bar slide
+- **Hint ring**: AnimatePresence fade-in/out on dwell ring SVG
+- **TimerDisplay**: bar color CSS `transition` added
+- **LevelCard**: `whileHover` lift on lobby cards
+- **Tutorial/Complete Y-drift**: consistent 28px entrance drift
+- **Display font size**: unified to 2.369rem across Tutorial/Complete/Lobby headings
+- **Dwell ring track**: opacity raised 0.25 → 0.38 for visibility
+- **ConfettiIcon**: rebuilt as SVG trophy with confetti dots/streamers (was unicode emoji)
+- **PawIcon**: new SVG inline icon replaces `🐾` emoji in Lobby card info row
+- **Complete gallery**: `flex flex-wrap justify-center` so partial last row is centred (was `grid-cols-5` → left-aligned 4-item tail)
+- **Trophy size**: h-28 w-28 (112px) up from h-24 w-24 (96px)
 
 ## Key iPad Safari Hardening (do not revert)
 

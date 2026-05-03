@@ -7,6 +7,7 @@
 import { motion } from 'framer-motion';
 import { useGame } from '../store/gameStore';
 import { LEVELS } from '../levels/levels';
+import { PawIcon, PlayIcon } from './icons';
 
 const SCENE_IMG: Record<string, string> = {
   forest: '/scenes/lvl-1-forest.png',
@@ -249,7 +250,8 @@ function LevelCard({
           {title}
         </h3>
         <div className="flex items-center gap-1.5 text-[0.72rem] font-semibold text-paper/55">
-          <span>{creatureCount} 🐾</span>
+          <PawIcon className="h-3 w-3 shrink-0" />
+          <span>{creatureCount}</span>
           <span className="text-paper/25">·</span>
           <span>{timeStr}</span>
         </div>
@@ -262,7 +264,8 @@ function LevelCard({
               : 'bg-[rgba(245,238,222,0.10)] text-paper'
           }`}
         >
-          {isActive ? 'Continue ▶' : 'Play ▶'}
+          {isActive ? 'Continue' : 'Play'}
+          <PlayIcon className="h-3 w-3 shrink-0" />
         </div>
       </div>
 
