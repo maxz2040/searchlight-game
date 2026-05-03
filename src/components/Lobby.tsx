@@ -160,6 +160,7 @@ interface LevelCardProps {
   creatureCount:number;
   timeLimit:    number;
   earnedStars:  number;
+  bestTime:     number | null;
   isActive:     boolean;
   index:        number;
   onSelect:     (id: string) => void;
@@ -167,7 +168,7 @@ interface LevelCardProps {
 
 function LevelCard({
   levelId, title, scene, creatureCount, timeLimit,
-  earnedStars, isActive, index, onSelect,
+  earnedStars, bestTime, isActive, index, onSelect,
 }: LevelCardProps) {
   const meta    = LEVEL_META[levelId];
   const imgSrc  = SCENE_IMG[scene];
@@ -177,6 +178,16 @@ function LevelCard({
   const timeStr = endless
     ? '∞'
     : minutes > 0 ? `${minutes}:${String(secs).padStart(2, '0')}` : `${secs}s`;
+  
+  // Format best time if available
+  const bestTimeStr = bestTime
+    ? (() => {
+        const totalSec = Math.round(bestTime / 1000);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+      })()
+    : null;
 
   return (
     <motion.button
@@ -242,6 +253,12 @@ function LevelCard({
             ⭐ Best Start
           </div>
         )}
+        {/* Personal best time — when level is completed and not a best-start level */}
+        {bestTimeStr && !BEST_START.has(levelId) && (
+          <div className="absolute bottom-2 right-2 rounded-full bg-accent/85 px-2 py-0.5 text-[0.65rem] font-black text-night-deep shadow-md backdrop-blur-sm">
+            🏃 {bestTimeStr}
+          </div>
+        )}
       </div>
 
       {/* Info panel */}
@@ -285,6 +302,7 @@ function LevelCard({
 export function Lobby() {
   const selectLevel = useGame((s) => s.selectLevel);
   const levelStars  = useGame((s) => s.levelStars);
+  const bestTime    = useGame((s) => s.bestTime);
   const currentId   = useGame((s) => s.levelId);
 
   return (
@@ -371,6 +389,7 @@ export function Lobby() {
             creatureCount={level.creatures.length}
             timeLimit={level.timeLimit}
             earnedStars={levelStars[level.id] ?? 0}
+            bestTime={bestTime(level.id)}
             isActive={level.id === currentId}
             index={i}
             onSelect={selectLevel}

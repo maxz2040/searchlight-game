@@ -17,6 +17,7 @@ import { LEVELS, type Level, getLevel, nextLevelId } from '../levels/levels';
 // ---------------------------------------------------------------------------
 
 const STORAGE_KEY = 'searchlight:stars';
+const STORAGE_KEY_TIMES = 'searchlight:times';
 
 function loadStars(): Record<string, number> {
   try {
@@ -43,6 +44,30 @@ function saveStars(stars: Record<string, number>): void {
   }
 }
 
+function loadTimes(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_TIMES);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null) return {};
+    const clean: Record<string, number> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof k === 'string' && typeof v === 'number') clean[k] = v;
+    }
+    return clean;
+  } catch {
+    return {};
+  }
+}
+
+function saveTimes(times: Record<string, number>): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_TIMES, JSON.stringify(times));
+  } catch {
+    // Quota exceeded or private-browsing restriction — ignore.
+  }
+}
+
 export type Phase = 'loading' | 'tutorial' | 'playing' | 'complete' | 'lobby';
 
 interface GameState {
@@ -54,12 +79,15 @@ interface GameState {
   timeExpired: boolean;
   /** Best star score achieved per level id — persists across replays. */
   levelStars: Record<string, number>;
+  /** Best completion time (ms) per level id — persists across replays. */
+  levelTimes: Record<string, number>;
 
   // Derived selectors
   level(): Level;
   remaining(): number;
   elapsedMs(): number;
   stars(): number;
+  bestTime(levelId: string): number | null;
 
   // Actions
   start(): void;
@@ -80,6 +108,7 @@ export const useGame = create<GameState>((set, get) => ({
   completedAt: null,
   timeExpired: false,
   levelStars: loadStars(),
+  levelTimes: loadTimes(),
 
   level() {
     const id = get().levelId;
@@ -107,6 +136,10 @@ export const useGame = create<GameState>((set, get) => ({
     if (ratio <= 0.4) return 3;
     if (ratio <= 0.7) return 2;
     return 1;
+  },
+  bestTime(levelId: string): number | null {
+    const time = get().levelTimes[levelId];
+    return typeof time === 'number' ? time : null;
   },
 
   start() {
@@ -163,14 +196,21 @@ export const useGame = create<GameState>((set, get) => ({
   },
   next() {
     // Save best stars for completed level, advance to next, show lobby.
-    const { levelId, levelStars } = get();
+    const { levelId, levelStars, levelTimes } = get();
     const earned = get().stars();
     const nxt = nextLevelId(levelId);
     const updatedStars = {
       ...levelStars,
       [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
     };
+    const elapsed = get().elapsedMs();
+    const bestTime = levelTimes[levelId];
+    const updatedTimes = {
+      ...levelTimes,
+      [levelId]: bestTime === undefined ? elapsed : Math.min(bestTime, elapsed),
+    };
     saveStars(updatedStars);
+    saveTimes(updatedTimes);
     set({
       levelId: nxt ?? LEVELS[0].id,
       found: new Set(),
