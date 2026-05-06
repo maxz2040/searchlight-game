@@ -122,21 +122,11 @@ async function dragTo(page: Page, fx: number, fy: number) {
   await page.mouse.move(box.x + box.width * fx, box.y + box.height * fy, { steps: 12 })
 }
 
-async function markFound(page: Page, ids: string[]) {
-  await page.evaluate((ids) => {
-    const h = (window as unknown as {
-      __searchlight: { store: { getState(): { markFound(id: string): void } } }
-    }).__searchlight
-    for (const id of ids) h.store.getState().markFound(id)
-  }, ids)
-}
-
 async function snap(page: Page, vp: Viewport, scene: string, caption: string, shots: Shot[]) {
   const file = `${vp.name}__${scene}.png`
   const fp = path.join(OUT, file)
   await page.screenshot({ path: fp, fullPage: false })
   shots.push({ file, viewport: vp.name, scene, caption })
-  // eslint-disable-next-line no-console
   console.log(`  📸 ${vp.name} / ${scene}`)
 }
 

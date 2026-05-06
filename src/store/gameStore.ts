@@ -219,20 +219,29 @@ export const useGame = create<GameState>((set, get) => ({
       completedAt: null,
       timeExpired: false,
       levelStars: updatedStars,
+      levelTimes: updatedTimes,
     });
   },
   goToLobby() {
-    // Save best stars, keep current levelId, show lobby.
-    const { levelId, levelStars } = get();
+    // Save best stars and time, keep current levelId, show lobby.
+    const { levelId, levelStars, levelTimes } = get();
     const earned = get().stars();
     const updatedStars = {
       ...levelStars,
       [levelId]: Math.max(levelStars[levelId] ?? 0, earned),
     };
+    const elapsed = get().elapsedMs();
+    const bestTime = levelTimes[levelId];
+    const updatedTimes = {
+      ...levelTimes,
+      [levelId]: bestTime === undefined ? elapsed : Math.min(bestTime, elapsed),
+    };
     saveStars(updatedStars);
+    saveTimes(updatedTimes);
     set({
       phase: 'lobby',
       levelStars: updatedStars,
+      levelTimes: updatedTimes,
     });
   },
 }));

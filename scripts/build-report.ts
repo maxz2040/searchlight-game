@@ -410,7 +410,6 @@ async function main() {
 </html>`
 
   await writeFile(OUT, html)
-  // eslint-disable-next-line no-console
   console.log(`✅ Report written → ${OUT}`)
   console.log(`   Open with:  open ${OUT}`)
 }

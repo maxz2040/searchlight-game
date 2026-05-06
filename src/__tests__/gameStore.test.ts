@@ -7,8 +7,8 @@ function reset() {
   localStorage.clear()
   const s = useGame.getState()
   s.selectLevel(LEVELS[0].id)
-  // Reset levelStars explicitly so previous test runs don't leak.
-  useGame.setState({ levelStars: {} })
+  // Reset persisted progress explicitly so previous test runs don't leak.
+  useGame.setState({ levelStars: {}, levelTimes: {} })
 }
 
 beforeEach(reset)
@@ -149,6 +149,38 @@ describe('gameStore: localStorage star persistence', () => {
     useGame.setState({ levelStars: {}, phase: 'complete', startedAt: Date.now() - 1000, completedAt: Date.now() })
     // goToLobby should not throw even with garbage in storage.
     expect(() => useGame.getState().goToLobby()).not.toThrow()
+  })
+})
+
+describe('gameStore: localStorage best-time persistence', () => {
+  it('next() writes best time to localStorage and live store state', () => {
+    useGame.setState({
+      phase: 'playing',
+      startedAt: Date.now() - 10_000,
+      completedAt: Date.now(),
+      levelTimes: {},
+    })
+    useGame.getState().next()
+
+    const raw = localStorage.getItem('searchlight:times')
+    expect(raw).not.toBeNull()
+    const saved = JSON.parse(raw!)
+    expect(typeof saved[LEVELS[0].id]).toBe('number')
+    expect(useGame.getState().bestTime(LEVELS[0].id)).toBe(saved[LEVELS[0].id])
+  })
+
+  it('goToLobby() writes best time and keeps the fastest previous time', () => {
+    useGame.setState({
+      phase: 'playing',
+      startedAt: Date.now() - 20_000,
+      completedAt: Date.now(),
+      levelTimes: { [LEVELS[0].id]: 5_000 },
+    })
+    useGame.getState().goToLobby()
+
+    const saved = JSON.parse(localStorage.getItem('searchlight:times')!)
+    expect(saved[LEVELS[0].id]).toBe(5_000)
+    expect(useGame.getState().bestTime(LEVELS[0].id)).toBe(5_000)
   })
 })
 

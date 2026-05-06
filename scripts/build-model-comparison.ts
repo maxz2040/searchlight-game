@@ -87,17 +87,12 @@ async function inline(file: string): Promise<string> {
 async function main() {
   const results: Result[] = JSON.parse(await readFile(path.join(BENCH, 'results.json'), 'utf8'))
 
-  const promptFile = path.join(BENCH, 'dispatch.ts')
-  const promptSource = await readFile(promptFile, 'utf8')
-  const promptText = promptSource.match(/PROMPT = process\.env\.PROMPT!/)
-    ? '(passed via env — see scripts)'
-    : ''
   const sharedPrompt = `A highly detailed, vibrant, and chaotic illustration in anime style featuring a dense and lively environment filled with hundreds of unique pocket creatures interacting with their surroundings. The scene is set in a glowing forest, packed with hidden details, lush vegetation, and various creatures hiding behind trees, in bushes, and near streams. The perspective is a wide-angle, top-down view that allows for maximum visual complexity. The image should be bright, colorful, and filled with playful energy, maintaining a high level of visual density where every inch of the canvas contains a story or a hidden creature to find.`
 
   const cards = await Promise.all(
     results.map(async (r) => {
       const meta = META[r.model] ?? { provider: '', verdict: '', useCase: '', pros: [], cons: [] }
-      let imgTag = ''
+      let imgTag: string
       if (r.ok && r.file) {
         const data = await inline(r.file)
         imgTag = `<a href="${data}" target="_blank" rel="noopener"><img loading="lazy" src="${data}" alt="${r.model} output" /></a>`
