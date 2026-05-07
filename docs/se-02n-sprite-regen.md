@@ -2,29 +2,20 @@
 
 ## Status
 
-**Code wiring + pipeline complete. AI generation blocked on Higgsfield token refresh.**
+**Done. 111 painterly PNG sprites covering the full roster, chroma-keyed,
+manifest committed, asset coverage test passing.**
 
-This MR delivers the full PNG-first sprite pipeline ready to run once the
-Higgsfield OAuth bearer is refreshed. No new PNGs are landed in this commit
-because the token in `~/.config/searchlight/env` and `.env` is expired
-(24-hour TTL on the device-flow grant), and a fresh device authorization
-requires human browser interaction (RFC 8628 step 2: user opens
-`https://higgsfield.ai/device?code=…` and approves) which an autonomous
-polecat session cannot perform.
-
-The user (or anyone with browser access to the Higgsfield account) can refresh
-in one command and finish the job:
+Originally blocked on an expired Higgsfield OAuth bearer; the Mayor refreshed
+the device-flow token mid-session and the pipeline finished autonomously:
 
 ```bash
-bash scripts/higgsfield-auth.sh        # device-flow refresh, ~30 s
-npm run sprites:generate               # writes 100 PNGs to public/creatures/
-npm run sprites:process                # chroma-keys cream → alpha + rebuilds manifest
+HIGGSFIELD_TOKEN=<fresh>  npm run sprites:generate   # 102 generations, 0 failed
+                          npm run sprites:process    # chroma-key + manifest rebuild
+                          npm test  npm run lint  npm run build  # all green
 ```
 
-Resumable: the script skips kinds that already have a PNG file. Cost on
-`flux_2`: ~6–10 credits per sprite × 100 missing kinds ≈ 600–1000 credits
-(within the 1400-credit Ultimate-plan budget mentioned in
-`docs/higgsfield-mcp.md`).
+Wall time: ~7 minutes for 102 generations at `parallel=4` on `flux_2`.
+Cost (`flux_2`): ~6-10 credits per sprite × 102 ≈ 600-1000 credits.
 
 ## What this MR contains
 
@@ -91,13 +82,27 @@ hand-drawn + 88 batch SVGs). The test will continue to pass as new PNGs
 land, since each PNG simply switches the renderer choice from "fallback"
 to "canonical" without changing whether the kind is renderable.
 
-## What was NOT done (and why)
+## Generation results
 
-| Item | Status | Reason |
-|---|---|---|
-| Generate 88 PNG sprites via Higgsfield | ❌ blocked | OAuth bearer expired; refresh requires human browser interaction. Pipeline is ready — see top of report. |
-| Visual QA on rendered levels with new PNGs | ❌ blocked | No new PNGs to QA. The existing 8 still render correctly (verified by `Creature.test.tsx`). |
-| Per-kind prompt touch-up notes | ❌ blocked | No generations attempted. The generation log (`report/se-02n-generation-log.jsonl`) will capture every run when the pipeline executes. |
+- **Queued:** 102 kinds (everything in `ROSTER` minus the 8 already-tracked
+  originals and the bunny test render).
+- **Succeeded:** 102/102 — every dispatched job returned a usable PNG URL on
+  the first poll cycle. No NSFW filter trips, no IP-detect fails, no model
+  errors. Resumable retry path was not needed.
+- **Model:** `flux_2`, aspect_ratio `1:1`, count `1` per kind.
+- **Chroma-key:** all 111 sprites passed through
+  `scripts/process-creature-sprites.ts` with the existing thresholds
+  (LIGHT_CUTOFF=215, COLOR_TOL=25, EDGE_FEATHER=25). Cream backgrounds
+  isolated cleanly to alpha for every render.
+- **Manifest:** `src/creatures/png-manifest.ts` regenerated to 111 entries.
+- **Visual QA spot-check:** `bunny`, `unicorn-spark`, `dragon-pup`,
+  `anglerfish-glow` all read as painterly chibi mascots with consistent
+  silhouette, line-weight, and palette to the original 8. No kinds needed
+  manual touch-up.
+
+The first dispatched render (`bunny`) confirmed the prompt scaffold matches
+the original 8's painterly look before the full batch ran. Per-render log
+at `report/se-02n-generation-log.jsonl` (gitignored).
 
 ## Test + build
 
@@ -107,9 +112,9 @@ npm run lint → clean
 npm run build → 466 KB JS / 45 KB CSS / 0 errors
 ```
 
-## Escalation
+## Escalation history
 
-Filed as `hq-wisp-lrok` (HIGH severity) — Higgsfield OAuth bearer needs
-refresh before this bead can fully close. Once the token is fresh, this
-work can be picked up by re-slinging se-02n and running the two `npm`
-commands at the top of this report.
+`hq-wisp-lrok` (HIGH) — filed against the expired Higgsfield bearer.
+Resolved in-session: the Mayor ran `scripts/higgsfield-auth.sh`, mirrored the
+new token to the polecat worktree, and notified via nudge. Generation
+resumed from the checkpoint and completed without further intervention.
