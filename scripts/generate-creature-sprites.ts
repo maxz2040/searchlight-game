@@ -20,7 +20,7 @@
  * Run: HIGGSFIELD_TOKEN=<token> tsx scripts/generate-creature-sprites.ts
  *      [--limit N] [--only kind1,kind2] [--parallel N] [--dry-run]
  */
-import { mkdir, writeFile, access, readFile, appendFile } from 'node:fs/promises'
+import { mkdir, writeFile, access, appendFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ROSTER, type RosterEntry, type Category } from '../src/creatures/roster'
