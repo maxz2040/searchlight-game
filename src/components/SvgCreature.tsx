@@ -1,10 +1,18 @@
 /* eslint-disable react-refresh/only-export-components */
-// SvgCreature — 12 original inline SVG characters + 88 new ones via batch files.
-// All shapes are original artwork, no external assets required.
-// Each fits a 100×100 viewBox. The CSS filter in Creature.tsx handles the
-// hidden/found visual states (brightness, drop-shadow).
+// SvgCreature — INLINE SVG FALLBACK for kinds that don't yet have a generated
+// PNG. The canonical art for every roster kind is a Higgsfield-generated PNG
+// in public/creatures/<kind>.png; SvgCreature is the placeholder rendered
+// when that PNG is missing (see src/components/Creature.tsx).
+//
+// Original 12 hand-drawn SVG characters + 88 batch-generated SVGs cover the
+// roster. Each fits a 100×100 viewBox. The CSS filter in Creature.tsx handles
+// the hidden/found visual states (brightness, drop-shadow).
 // Each creature wraps its content in <g className="creature-{anim}"> so it
 // animates on its own rhythm (bob/wiggle/flutter/spin-slow/pulse/bounce-hop/sway).
+//
+// To upgrade a kind from SVG fallback to PNG: run `npm run sprites:generate`
+// (writes public/creatures/<kind>.png + regenerates the manifest). The PNG
+// manifest in src/creatures/png-manifest.ts then takes precedence at render.
 
 import type { CreatureKind } from '../levels/levels';
 import { SVG_BATCH_A } from '../creatures/svgs-a';
