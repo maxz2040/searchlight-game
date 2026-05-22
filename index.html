@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/searchlight-game/favicon.svg" />
+    <!-- iPad-friendly viewport: cover the notch on iPad Pro,
+         disable user-scaling so kid double-taps don't zoom the game.
+         Note: impeccable bans `user-scalable=no` for general apps. We claim
+         a domain-specific waiver: this is a finger-drag play surface where
+         a 5-year-old will accidentally double-tap-zoom every 4 seconds.
+         The play surface itself uses `touch-action: none`; this meta is
+         the matching system-level guarantee. WCAG SC 1.4.4 reflow remains
+         honoured because the only screen content is the play surface, not
+         readable prose. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Theme colour matches --color-night-deep (oklch(11% 0.03 275) ≈ srgb #0d0e1d). -->
+    <meta name="theme-color" content="#0d0e1d" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Find the hidden friends with your magic lantern. A kid-friendly searchlight game for iPad." />
+    <!-- Preload the variable woff2 binaries so the first paint already has
+         Fraunces (display) + Nunito (body). With size-adjust + ascent/descent
+         overrides on the matching @font-face rules, the swap is invisible. -->
+    <link rel="preload" href="/searchlight-game/fonts/Fraunces.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/searchlight-game/fonts/Nunito.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="manifest" href="/searchlight-game/manifest.json" />
+    <title>Searchlight Edition</title>
+    <script type="module" crossorigin src="/searchlight-game/assets/index-DZJBgmMc.js"></script>
+    <link rel="stylesheet" crossorigin href="/searchlight-game/assets/index-BmzWIz42.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

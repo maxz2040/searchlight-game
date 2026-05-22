@@ -1,0 +1,28 @@
+{
+  "name": "Searchlight Edition",
+  "short_name": "Searchlight",
+  "description": "Find the hidden friends with your magic lantern. A kid-friendly searchlight game for iPad.",
+  "start_url": "/searchlight-game/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0e1d",
+  "theme_color": "#0d0e1d",
+  "scope": "/searchlight-game/",
+  "icons": [
+    {
+      "src": "/searchlight-game/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["games"],
+  "screenshots": [
+    {
+      "src": "/searchlight-game/favicon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}
