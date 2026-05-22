@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 // Pokemon Searchlight Edition — kid-friendly iPad web game.
 // Tailwind v4 via the Vite plugin (no postcss config needed).
 export default defineConfig({
+  base: process.env.NODE_ENV === 'production' ? '/searchlight-game/' : '/',
   plugins: [react(), tailwindcss()],
   server: {
     host: '0.0.0.0',
